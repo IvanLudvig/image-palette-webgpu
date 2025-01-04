@@ -19,12 +19,10 @@ fn vs(
         vec2f(1.0, 1.0),
     );
     let xy = pos[vertex_idx];
-
-    let size = 0.1;
     
     let position = vec2f(
-        -1.0 + size * (f32(instance)) + xy.x * size,
-        -1.0 + xy.y * size
+        -1.0 + 2.0 * (f32(instance) + xy.x) / 4.0,
+        -1.0 + 2.0 * xy.y
     );
     
     var output: VertexOutput;
@@ -40,4 +38,4 @@ fn vs(
 @fragment
 fn fs(@location(0) color: vec3f) -> @location(0) vec4f {
     return vec4f(color, 1.0);
-} 
+}

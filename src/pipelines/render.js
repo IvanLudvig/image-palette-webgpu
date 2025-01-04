@@ -1,7 +1,7 @@
 import params from '../params.js';
 
 export async function setupRender(device, canvasFormat, source) {
-    const N = params.imgSize[0] * params.imgSize[1];
+    const N = source.width * source.height;
 
     const centroidsBuffer = device.createBuffer({
         label: 'centroids-render',

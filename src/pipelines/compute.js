@@ -1,7 +1,7 @@
 import params from '../params.js';
 
 export async function setupCompute(device, source) {
-    const N = params.imgSize[0] * params.imgSize[1];
+    const N = source.width * source.height;
 
     const centroids = new Float32Array(3 * params.K);
     for (let i = 0; i < 3 * params.K; i++) {

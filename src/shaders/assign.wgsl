@@ -8,9 +8,18 @@ fn dist(a: vec3f, b: vec3f) -> f32 {
 
 @compute @workgroup_size(16, 16)
 fn cs(@builtin(global_invocation_id) id: vec3u) {
+    let dimensions = textureDimensions(tex);
+    let width = u32(dimensions.x);
+    let height = u32(dimensions.y);
+
+    let pointId = id.x + id.y * width;
+
+    if (pointId >= width * height) {
+        return;
+    }
+
     let pixel = textureLoad(tex, id.xy, 0);
 
-    let pointId = id.x + id.y * 128;
     var min_dist = -1.;
     var closest = 0;
     let pos = vec3f(pixel.r, pixel.g, pixel.b);

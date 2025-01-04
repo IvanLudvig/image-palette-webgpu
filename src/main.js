@@ -1,4 +1,3 @@
-import { loadImageBitmap } from './utils.js';
 import { setupCompute } from './pipelines/compute.js';
 import { setupRender } from './pipelines/render.js';
 import params from './params.js';
@@ -12,11 +11,19 @@ async function main() {
     }
 
     const canvas = document.querySelector('canvas');
+    const image = document.querySelector('img');
+
+    const imageWidth = image.width;
+    const imageHeight = image.height;
+
+    canvas.width = 32 * params.K;
+    canvas.height = 32;
+    
     const context = canvas.getContext('webgpu');
     const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
     context.configure({ device, format: canvasFormat });
 
-    const source = await loadImageBitmap(params.imgPath);
+    const source = await createImageBitmap(image, { colorSpaceConversion: 'none' });
 
     const {
         centroidsBuffer: computeCentroidsBuffer,
@@ -51,8 +58,8 @@ async function main() {
             assignPass.setPipeline(assignPipeline);
             assignPass.setBindGroup(0, computeBindGroup);
             assignPass.dispatchWorkgroups(
-                Math.ceil(params.imgSize[0] / params.workgroupSize[0]),
-                Math.ceil(params.imgSize[1] / params.workgroupSize[1]),
+                Math.ceil(imageWidth / params.workgroupSize[0]),
+                Math.ceil(imageHeight / params.workgroupSize[1]),
                 1
             );
             assignPass.end();
@@ -67,7 +74,7 @@ async function main() {
         encoder.copyBufferToBuffer(
             computeClustersBuffer, 0,
             renderClustersBuffer, 0,
-            4 * params.imgSize[0] * params.imgSize[1]
+            4 * imageWidth * imageHeight
         );
         encoder.copyBufferToBuffer(
             computeCentroidsBuffer, 0,
@@ -76,9 +83,9 @@ async function main() {
         );
 
         const pass = encoder.beginRenderPass(renderPassDescriptor);
-        pass.setPipeline(renderPipeline);
-        pass.setBindGroup(0, renderBindGroup);
-        pass.draw(6);
+        // pass.setPipeline(renderPipeline);
+        // pass.setBindGroup(0, renderBindGroup);
+        // pass.draw(6);
         pass.setPipeline(centroidPipeline);
         pass.setBindGroup(0, renderBindGroup);
         pass.draw(6, params.K);
