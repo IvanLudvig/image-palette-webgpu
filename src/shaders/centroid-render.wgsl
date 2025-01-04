@@ -3,7 +3,7 @@ struct VertexOutput {
     @location(0) color: vec3f,
 };
 
-@group(0) @binding(2) var<storage> centroids: array<f32>;
+@group(0) @binding(0) var<storage> centroids: array<f32>;
 
 @vertex
 fn vs(

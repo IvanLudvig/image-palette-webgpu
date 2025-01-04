@@ -34,12 +34,10 @@ async function main() {
     } = await setupCompute(device, source);
 
     const {
-        renderPipeline,
         centroidPipeline,
         renderBindGroup,
-        centroidsBuffer: renderCentroidsBuffer,
-        clustersBuffer: renderClustersBuffer
-    } = await setupRender(device, canvasFormat, source);
+        centroidsBuffer: renderCentroidsBuffer
+    } = await setupRender(device, canvasFormat);
 
     const renderPassDescriptor = {
         colorAttachments: [{
@@ -72,20 +70,12 @@ async function main() {
         }
 
         encoder.copyBufferToBuffer(
-            computeClustersBuffer, 0,
-            renderClustersBuffer, 0,
-            4 * imageWidth * imageHeight
-        );
-        encoder.copyBufferToBuffer(
             computeCentroidsBuffer, 0,
             renderCentroidsBuffer, 0,
             3 * params.K * Float32Array.BYTES_PER_ELEMENT
         );
 
         const pass = encoder.beginRenderPass(renderPassDescriptor);
-        // pass.setPipeline(renderPipeline);
-        // pass.setBindGroup(0, renderBindGroup);
-        // pass.draw(6);
         pass.setPipeline(centroidPipeline);
         pass.setBindGroup(0, renderBindGroup);
         pass.draw(6, params.K);
