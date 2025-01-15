@@ -1,7 +1,46 @@
 import params from '../params.js';
 
 export async function setupCompute(device, source) {
-    const N = source.width * source.height;
+    const canvas = new OffscreenCanvas(source.width, source.height);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(source, 0, 0);
+    const imageData = ctx.getImageData(0, 0, source.width, source.height).data;
+    const colorHistogram = new Map();
+    for (let i = 0; i < imageData.length; i += 4) {
+        const r = imageData[i];
+        const g = imageData[i + 1];
+        const b = imageData[i + 2];
+        const key = (r << 16) | (g << 8) | b;
+        colorHistogram.set(key, (colorHistogram.get(key) ?? 0) + 1);
+    }
+
+    const colorCount = colorHistogram.size;
+    const histogramArray = new Float32Array(colorCount * 4);
+    let i = 0;
+    for (const [key, count] of colorHistogram) {
+        const r = (key >> 16) & 0xFF;
+        const g = (key >> 8) & 0xFF;
+        const b = key & 0xFF;
+
+        histogramArray[i * 4] = r / 255;
+        histogramArray[i * 4 + 1] = g / 255;
+        histogramArray[i * 4 + 2] = b / 255;
+        histogramArray[i * 4 + 3] = count;
+        i++;
+    }
+
+    const colorCountUniformBuffer = device.createBuffer({
+        size: 4,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
+    device.queue.writeBuffer(colorCountUniformBuffer, 0, new Uint32Array([colorCount]));
+
+    const histogramBuffer = device.createBuffer({
+        label: 'histogram-compute',
+        size: histogramArray.byteLength,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+    });
+    device.queue.writeBuffer(histogramBuffer, 0, histogramArray);
 
     const centroids = new Float32Array(3 * params.K);
     for (let i = 0; i < 3 * params.K; i++) {
@@ -17,7 +56,7 @@ export async function setupCompute(device, source) {
 
     const clustersBuffer = device.createBuffer({
         label: 'clusters-compute',
-        size: 4 * N,
+        size: colorCount * 4,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     });
 
@@ -28,33 +67,24 @@ export async function setupCompute(device, source) {
         code: await fetch('src/shaders/update.wgsl').then(res => res.text())
     });
 
-    const computeTexture = device.createTexture({
-        format: 'rgba8unorm',
-        size: [source.width, source.height],
-        usage:
-            GPUTextureUsage.TEXTURE_BINDING |
-            GPUTextureUsage.COPY_DST |
-            GPUTextureUsage.RENDER_ATTACHMENT |
-            GPUTextureUsage.SAMPLED
-    });
-
-    device.queue.copyExternalImageToTexture(
-        { source, flipY: true },
-        { texture: computeTexture },
-        { width: source.width, height: source.height }
-    );
-
     const computeBindGroupLayout = device.createBindGroupLayout({
         entries: [{
             binding: 0,
             visibility: GPUShaderStage.COMPUTE,
-            texture: { sampleType: 'float', viewDimension: '2d' }
-        }, {
+            buffer: { type: 'read-only-storage' }
+        },
+        {
             binding: 1,
             visibility: GPUShaderStage.COMPUTE,
-            buffer: { type: 'storage' }
-        }, {
+            buffer: { type: 'uniform' }
+        },
+        {
             binding: 2,
+            visibility: GPUShaderStage.COMPUTE,
+            buffer: { type: 'storage' }
+        },
+        {
+            binding: 3,
             visibility: GPUShaderStage.COMPUTE,
             buffer: { type: 'storage' }
         }]
@@ -63,9 +93,10 @@ export async function setupCompute(device, source) {
     const computeBindGroup = device.createBindGroup({
         layout: computeBindGroupLayout,
         entries: [
-            { binding: 0, resource: computeTexture.createView() },
-            { binding: 1, resource: { buffer: centroidsBuffer } },
-            { binding: 2, resource: { buffer: clustersBuffer } }
+            { binding: 0, resource: { buffer: histogramBuffer } },
+            { binding: 1, resource: { buffer: colorCountUniformBuffer } },
+            { binding: 2, resource: { buffer: centroidsBuffer } },
+            { binding: 3, resource: { buffer: clustersBuffer } }
         ]
     });
     const computePipelineLayout = device.createPipelineLayout({
@@ -82,10 +113,10 @@ export async function setupCompute(device, source) {
     });
 
     return {
+        colorCount,
         centroidsBuffer,
-        clustersBuffer,
         assignPipeline,
         updatePipeline,
         computeBindGroup
     };
-} 
+}

@@ -13,9 +13,6 @@ async function main() {
     const canvas = document.querySelector('canvas');
     const image = document.querySelector('img');
 
-    const imageWidth = image.width;
-    const imageHeight = image.height;
-
     canvas.width = 32 * params.K;
     canvas.height = 32;
     
@@ -26,8 +23,8 @@ async function main() {
     const source = await createImageBitmap(image, { colorSpaceConversion: 'none' });
 
     const {
+        colorCount,
         centroidsBuffer: computeCentroidsBuffer,
-        clustersBuffer: computeClustersBuffer,
         assignPipeline,
         updatePipeline,
         computeBindGroup
@@ -55,11 +52,7 @@ async function main() {
             const assignPass = encoder.beginComputePass();
             assignPass.setPipeline(assignPipeline);
             assignPass.setBindGroup(0, computeBindGroup);
-            assignPass.dispatchWorkgroups(
-                Math.ceil(imageWidth / params.workgroupSize[0]),
-                Math.ceil(imageHeight / params.workgroupSize[1]),
-                1
-            );
+            assignPass.dispatchWorkgroups(Math.ceil(colorCount / params.workgroupSize));
             assignPass.end();
 
             const updatePass = encoder.beginComputePass();
@@ -88,4 +81,4 @@ async function main() {
     render();
 }
 
-main(); 
+main();

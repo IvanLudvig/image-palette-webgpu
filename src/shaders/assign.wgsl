@@ -1,6 +1,7 @@
-@group(0) @binding(0) var tex: texture_2d<f32>;
-@group(0) @binding(1) var<storage, read_write> centroids: array<f32>;
-@group(0) @binding(2) var<storage, read_write> clusters: array<u32>;
+@group(0) @binding(0) var<storage> histogram: array<f32>;
+@group(0) @binding(1) var<uniform> color_count: u32;
+@group(0) @binding(2) var<storage, read_write> centroids: array<f32>;
+@group(0) @binding(3) var<storage, read_write> clusters: array<u32>;
 
 fn dist(a: vec3f, b: vec3f) -> f32 {
     return pow((a.x - b.x), 2) + pow((a.y - b.y), 2) + pow((a.z - b.z), 2);
@@ -8,22 +9,16 @@ fn dist(a: vec3f, b: vec3f) -> f32 {
 
 @compute @workgroup_size(16, 16)
 fn cs(@builtin(global_invocation_id) id: vec3u) {
-    let dimensions = textureDimensions(tex);
-    let width = u32(dimensions.x);
-    let height = u32(dimensions.y);
-
-    let pointId = id.x + id.y * width;
-
-    if (pointId >= width * height) {
+    if (id.x >= color_count) {
         return;
     }
 
-    let pixel = textureLoad(tex, id.xy, 0);
+    let pos = vec3f(histogram[id.x * 4], histogram[id.x * 4 + 1], histogram[id.x * 4 + 2]);
+    let count = histogram[id.x * 4 + 3];
 
     var min_dist = -1.;
     var closest = 0;
-    let pos = vec3f(pixel.r, pixel.g, pixel.b);
-
+    
     for (var i = 0; i < 8; i++) {
         let centroid = vec3f(centroids[3*i], centroids[3*i + 1], centroids[3*i + 2]);
         let d = dist(pos, centroid);
@@ -33,5 +28,5 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
         }
     }
 
-    clusters[pointId] = u32(closest);
+    clusters[id.x] = u32(closest);
 }
