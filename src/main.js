@@ -12,7 +12,7 @@ async function main() {
 
     const canvas = document.querySelector('canvas');
     const image = document.querySelector('img');
-    const imageUpload = document.getElementById('imageUpload');
+    const imageUpload = document.getElementById('image-upload');
 
     canvas.width = 32 * params.K;
     canvas.height = 32;
