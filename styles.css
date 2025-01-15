@@ -2,12 +2,12 @@ body {
     padding: 0;
     margin: 0;
     background-color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 h1 {
     color: #000;
     text-align: center;
-    font-family: Arial, Helvetica, sans-serif;
 }
 
 .container {
@@ -16,7 +16,25 @@ h1 {
     align-items: center;
     gap: 16px;
     width: calc(100% - 32px);
-    max-width: 512px;
+    max-width: 1024px;
     margin: 0 auto;
     padding: 16px;
+}
+
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 256px;
+}
+
+.upload-container input {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #000;
+    margin: auto;
+    text-align: center;
 }
