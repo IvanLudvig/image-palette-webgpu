@@ -1,30 +1,29 @@
 import { extractDominantColors } from './main.js';
-import params from './params.js';
 
 const image = document.querySelector('img');
 const imageUpload = document.getElementById('image-upload');
+const palette = document.getElementById('color-palette');
 
 async function run() {
-    const adapter = await navigator.gpu?.requestAdapter();
-    const device = await adapter?.requestDevice();
-    if (!device) {
-        window.alert('WebGPU not supported');
-        throw new Error('WebGPU not supported');
-    }
+    const colors = await extractDominantColors(image);
 
-    const colors = await extractDominantColors(device, image);
-
-    const canvas = document.querySelector('canvas');
-    const squareSize = 32;
-    canvas.width = squareSize * params.K;
-    canvas.height = squareSize;
-    const context = canvas.getContext('2d');
-
-    colors.forEach((color, index) => {
-        context.fillStyle = color;
-        context.fillRect(index * squareSize, 0, squareSize, squareSize);
+    palette.innerHTML = '';
+    colors.forEach(color => {
+        const colorBox = document.createElement('div');
+        colorBox.className = 'color-box';
+        
+        const colorSquare = document.createElement('div');
+        colorSquare.className = 'color-square';
+        colorSquare.style.backgroundColor = color;
+        
+        const colorLabel = document.createElement('div');
+        colorLabel.className = 'color-label';
+        colorLabel.textContent = color.toUpperCase();
+        
+        colorBox.appendChild(colorSquare);
+        colorBox.appendChild(colorLabel);
+        palette.appendChild(colorBox);
     });
-
 }
 
 imageUpload.addEventListener('change', async (e) => {
@@ -33,6 +32,7 @@ imageUpload.addEventListener('change', async (e) => {
         if (file.type.startsWith('image/')) {
             const imageUrl = URL.createObjectURL(file);
             image.src = imageUrl;
+            palette.innerHTML = '';
             await new Promise(resolve => image.onload = resolve);
             await run();
             URL.revokeObjectURL(imageUrl);

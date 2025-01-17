@@ -2,7 +2,14 @@ import { setupCompute } from './pipelines/compute.js';
 import params from './params.js';
 import { floatArrayToHex } from './utils.js';
 
-export async function extractDominantColors(device, imageSource) {
+export async function extractDominantColors(imageSource) {
+    const adapter = await navigator.gpu?.requestAdapter();
+    const device = await adapter?.requestDevice();
+    if (!device) {
+        window.alert('WebGPU not supported');
+        throw new Error('WebGPU not supported');
+    }
+
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
 
     const {
