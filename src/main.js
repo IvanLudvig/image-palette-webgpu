@@ -49,6 +49,13 @@ export async function extractDominantColors(device, imageSource) {
     const colors = new Float32Array(mappedData.slice(0));
     centroidsBuffer.unmap();
 
-    const hexColors = floatArrayToHex(colors);
+    const validColors = [];
+    for (let i = 0; i < colors.length; i += 3) {
+        if (!isNaN(colors[i]) && !isNaN(colors[i + 1]) && !isNaN(colors[i + 2])) {
+            validColors.push(colors[i], colors[i + 1], colors[i + 2]);
+        }
+    }
+
+    const hexColors = floatArrayToHex(new Float32Array(validColors));
     return hexColors;
 }
