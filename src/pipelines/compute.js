@@ -30,7 +30,7 @@ export async function setupCompute(device, source) {
     }
 
     const countsUniformBuffer = device.createBuffer({
-        size: 2 * 4,
+        size: 2 * Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
     device.queue.writeBuffer(countsUniformBuffer, 0, new Uint32Array([params.K, colorCount]));
@@ -56,21 +56,21 @@ export async function setupCompute(device, source) {
 
     const clustersBuffer = device.createBuffer({
         label: 'clusters-compute',
-        size: colorCount * 4,
+        size: colorCount * Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     });
 
     const centroidsDeltaBuffer = device.createBuffer({
         label: 'centroids-delta-compute',
-        size: params.K * 4,
+        size: params.K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     });
 
     const kUniformBuffer = device.createBuffer({
-        size: 4,
+        size: Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    device.queue.writeBuffer(kUniformBuffer, 0, new Uint32Array([4]));
+    device.queue.writeBuffer(kUniformBuffer, 0, new Uint32Array([params.K]));
 
     const assignModule = device.createShaderModule({
         code: await fetch('src/shaders/assign.wgsl').then(res => res.text())

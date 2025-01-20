@@ -52,14 +52,14 @@ export async function extractDominantColors(imageSource) {
             encoder.copyBufferToBuffer(
                 centroidsDeltaBuffer, 0,
                 stagingCentroidsDeltaBuffer, 0,
-                params.K * 4
+                params.K * Float32Array.BYTES_PER_ELEMENT
             );
 
             const commandBuffer = encoder.finish();
             device.queue.submit([commandBuffer]);
             encoder = device.createCommandEncoder();
 
-            await stagingCentroidsDeltaBuffer.mapAsync(GPUMapMode.READ, 0, params.K * 4);
+            await stagingCentroidsDeltaBuffer.mapAsync(GPUMapMode.READ, 0, params.K * Float32Array.BYTES_PER_ELEMENT);
             const centroidsDeltaData = new Float32Array(stagingCentroidsDeltaBuffer.getMappedRange());
             const deltaSum = centroidsDeltaData.reduce((acc, val) => acc + val, 0);
             stagingCentroidsDeltaBuffer.unmap();
