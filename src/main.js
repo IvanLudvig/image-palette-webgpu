@@ -14,21 +14,28 @@ export async function extractDominantColors(imageSource) {
 
     const {
         colorCount,
-        centroidsBuffer: computeCentroidsBuffer,
+        centroidsBuffer,
+        centroidsDeltaBuffer,
         assignPipeline,
         updatePipeline,
         computeBindGroup
     } = await setupCompute(device, source);
 
-    const centroidsBuffer = device.createBuffer({
-        label: 'centroids-render',
+    const stagingCentroidsBuffer = device.createBuffer({
+        label: 'centroids-staging',
         size: 3 * params.K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
-    const encoder = device.createCommandEncoder();
+    const stagingCentroidsDeltaBuffer = device.createBuffer({
+        label: 'centroids-delta-staging',
+        size: params.K * Uint32Array.BYTES_PER_ELEMENT,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+    });
 
-    for (let i = 0; i < params.iterations; i++) {
+    let encoder = device.createCommandEncoder();
+
+    for (let i = 0; i < params.maxIterations; i++) {
         const assignPass = encoder.beginComputePass();
         assignPass.setPipeline(assignPipeline);
         assignPass.setBindGroup(0, computeBindGroup);
@@ -40,21 +47,42 @@ export async function extractDominantColors(imageSource) {
         updatePass.setBindGroup(0, computeBindGroup);
         updatePass.dispatchWorkgroups(params.K);
         updatePass.end();
+
+        if (i !== 0 && i % params.convergenceCheck == 0) {
+            encoder.copyBufferToBuffer(
+                centroidsDeltaBuffer, 0,
+                stagingCentroidsDeltaBuffer, 0,
+                params.K * 4
+            );
+
+            const commandBuffer = encoder.finish();
+            device.queue.submit([commandBuffer]);
+            encoder = device.createCommandEncoder();
+
+            await stagingCentroidsDeltaBuffer.mapAsync(GPUMapMode.READ, 0, params.K * 4);
+            const centroidsDeltaData = new Float32Array(stagingCentroidsDeltaBuffer.getMappedRange());
+            const deltaSum = centroidsDeltaData.reduce((acc, val) => acc + val, 0);
+            stagingCentroidsDeltaBuffer.unmap();
+            if (deltaSum < params.convergenceEps) {
+                console.log(`Convergence reached at iteration ${i}`);
+                break;
+            }
+        }
     }
 
     encoder.copyBufferToBuffer(
-        computeCentroidsBuffer, 0,
         centroidsBuffer, 0,
+        stagingCentroidsBuffer, 0,
         3 * params.K * Float32Array.BYTES_PER_ELEMENT
     );
 
     const commandBuffer = encoder.finish();
     device.queue.submit([commandBuffer]);
 
-    await centroidsBuffer.mapAsync(GPUMapMode.READ, 0, params.K * 3 * Float32Array.BYTES_PER_ELEMENT);
-    const mappedData = centroidsBuffer.getMappedRange();
+    await stagingCentroidsBuffer.mapAsync(GPUMapMode.READ, 0, params.K * 3 * Float32Array.BYTES_PER_ELEMENT);
+    const mappedData = stagingCentroidsBuffer.getMappedRange();
     const colors = new Float32Array(mappedData.slice(0));
-    centroidsBuffer.unmap();
+    stagingCentroidsBuffer.unmap();
 
     const validColors = [];
     for (let i = 0; i < colors.length; i += 3) {

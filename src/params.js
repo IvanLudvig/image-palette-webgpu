@@ -1,5 +1,7 @@
 export default {
     K: 4,
     workgroupSize: 16,
-    iterations: 10
+    maxIterations: 256,
+    convergenceEps: 0.01,
+    convergenceCheck: 8
 };

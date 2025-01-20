@@ -29,11 +29,11 @@ export async function setupCompute(device, source) {
         i++;
     }
 
-    const colorCountUniformBuffer = device.createBuffer({
-        size: 4,
+    const countsUniformBuffer = device.createBuffer({
+        size: 2 * 4,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    device.queue.writeBuffer(colorCountUniformBuffer, 0, new Uint32Array([colorCount]));
+    device.queue.writeBuffer(countsUniformBuffer, 0, new Uint32Array([params.K, colorCount]));
 
     const histogramBuffer = device.createBuffer({
         label: 'histogram-compute',
@@ -59,6 +59,18 @@ export async function setupCompute(device, source) {
         size: colorCount * 4,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     });
+
+    const centroidsDeltaBuffer = device.createBuffer({
+        label: 'centroids-delta-compute',
+        size: params.K * 4,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+    });
+
+    const kUniformBuffer = device.createBuffer({
+        size: 4,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
+    device.queue.writeBuffer(kUniformBuffer, 0, new Uint32Array([4]));
 
     const assignModule = device.createShaderModule({
         code: await fetch('src/shaders/assign.wgsl').then(res => res.text())
@@ -87,6 +99,11 @@ export async function setupCompute(device, source) {
             binding: 3,
             visibility: GPUShaderStage.COMPUTE,
             buffer: { type: 'storage' }
+        },
+        {
+            binding: 4,
+            visibility: GPUShaderStage.COMPUTE,
+            buffer: { type: 'storage' }
         }]
     });
 
@@ -94,9 +111,10 @@ export async function setupCompute(device, source) {
         layout: computeBindGroupLayout,
         entries: [
             { binding: 0, resource: { buffer: histogramBuffer } },
-            { binding: 1, resource: { buffer: colorCountUniformBuffer } },
+            { binding: 1, resource: { buffer: countsUniformBuffer } },
             { binding: 2, resource: { buffer: centroidsBuffer } },
-            { binding: 3, resource: { buffer: clustersBuffer } }
+            { binding: 3, resource: { buffer: clustersBuffer } },
+            { binding: 4, resource: { buffer: centroidsDeltaBuffer } }
         ]
     });
     const computePipelineLayout = device.createPipelineLayout({
@@ -115,6 +133,7 @@ export async function setupCompute(device, source) {
     return {
         colorCount,
         centroidsBuffer,
+        centroidsDeltaBuffer,
         assignPipeline,
         updatePipeline,
         computeBindGroup

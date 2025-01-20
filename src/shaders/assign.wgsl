@@ -1,5 +1,10 @@
+struct Counts {
+    centroids: u32,
+    colors: u32
+};
+
 @group(0) @binding(0) var<storage> histogram: array<f32>;
-@group(0) @binding(1) var<uniform> color_count: u32;
+@group(0) @binding(1) var<uniform> counts: Counts;
 @group(0) @binding(2) var<storage, read_write> centroids: array<f32>;
 @group(0) @binding(3) var<storage, read_write> clusters: array<u32>;
 
@@ -9,7 +14,7 @@ fn dist(a: vec3f, b: vec3f) -> f32 {
 
 @compute @workgroup_size(16, 16)
 fn cs(@builtin(global_invocation_id) id: vec3u) {
-    if (id.x >= color_count) {
+    if (id.x >= counts.colors) {
         return;
     }
 
@@ -17,9 +22,9 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     let count = histogram[id.x * 4 + 3];
 
     var min_dist = -1.;
-    var closest = 0;
+    var closest = 0u;
     
-    for (var i = 0; i < 8; i++) {
+    for (var i = 0u; i < counts.centroids; i++) {
         let centroid = vec3f(centroids[3*i], centroids[3*i + 1], centroids[3*i + 2]);
         let d = dist(pos, centroid);
         if (min_dist == -1 || d < min_dist){
@@ -28,5 +33,5 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
         }
     }
 
-    clusters[id.x] = u32(closest);
+    clusters[id.x] = closest;
 }
