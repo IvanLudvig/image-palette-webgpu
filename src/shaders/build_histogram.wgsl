@@ -25,11 +25,15 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     
     let pixel = textureLoad(tex, id.xy, 0);
 
+    let r = u32(pixel.r * 255.0);
+    let g = u32(pixel.g * 255.0);
+    let b = u32(pixel.b * 255.0);
+
     let bits_to_remove = 8u - INDEX_BITS;
-    let r = (u32(pixel.r * 255.0) >> bits_to_remove) + 1u;
-    let g = (u32(pixel.g * 255.0) >> bits_to_remove) + 1u;
-    let b = (u32(pixel.b * 255.0) >> bits_to_remove) + 1u;
-    let index = get_index(r, g, b);
+    let ir = (r >> bits_to_remove) + 1u;
+    let ig = (g >> bits_to_remove) + 1u;
+    let ib = (b >> bits_to_remove) + 1u;
+    let index = get_index(ir, ig, ib);
     
     atomicAdd(&weights[index], 1u);
     atomicAdd(&moments_r[index], r);
