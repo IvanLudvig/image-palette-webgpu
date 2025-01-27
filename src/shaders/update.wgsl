@@ -35,12 +35,12 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
 
     if (count > 0u) {
         let old_pos = vec3f(centroids[3*centroid], centroids[3*centroid + 1], centroids[3*centroid + 2]);
+        let new_pos = sum / f32(count);
 
-        centroids[3*centroid] = sum.x / f32(count);
-        centroids[3*centroid + 1] = sum.y / f32(count);
-        centroids[3*centroid + 2] = sum.z / f32(count);
+        centroids[3*centroid] = new_pos.x;
+        centroids[3*centroid + 1] = new_pos.y;
+        centroids[3*centroid + 2] = new_pos.z;
 
-        let new_pos = vec3f(centroids[3*centroid], centroids[3*centroid + 1], centroids[3*centroid + 2]);
         let d = dist(old_pos, new_pos);
         centroids_delta[centroid] = d;
     } else {

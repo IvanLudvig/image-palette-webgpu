@@ -110,6 +110,11 @@ export async function setupBuildHistogram(device, source) {
     });
 
     return {
+        weightsBuffer,
+        momentsRBuffer,
+        momentsGBuffer,
+        momentsBBuffer,
+        momentsBuffer,
         buildHistogramPipeline,
         inputBindGroup,
         buildHistogramBindGroup,
