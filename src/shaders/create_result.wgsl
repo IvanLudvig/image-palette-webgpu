@@ -48,13 +48,12 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     let channel = id.x;
     let cube_idx = id.y;
 
-    if (cube_idx >= total_cubes_num) {
+    if (cube_idx > total_cubes_num) {
         return;
     }
 
     let cube = cubes[cube_idx];
     let weight = volume(cube, &moments.w);
-
 
     if (weight > 0) {
         if (channel == 0) {

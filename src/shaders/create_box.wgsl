@@ -50,9 +50,13 @@ fn volume(cube: Box, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> u32 {
 }
 
 fn variance(cube: Box) -> f32 {
-    let dr = volume(cube, &moments.r);
-    let dg = volume(cube, &moments.g);
-    let db = volume(cube, &moments.b);
+    let vol = f32(volume(cube, &moments.w));
+    if (vol <= 1) {
+        return 0.0;
+    }
+    let dr = f32(volume(cube, &moments.r));
+    let dg = f32(volume(cube, &moments.g));
+    let db = f32(volume(cube, &moments.b));
     let xx = moments.quad[get_index(cube.r1, cube.g1, cube.b1)] -
         moments.quad[get_index(cube.r1, cube.g1, cube.b0)] -
         moments.quad[get_index(cube.r1, cube.g0, cube.b1)] +
@@ -61,32 +65,31 @@ fn variance(cube: Box) -> f32 {
         moments.quad[get_index(cube.r0, cube.g1, cube.b0)] +
         moments.quad[get_index(cube.r0, cube.g0, cube.b1)] -
         moments.quad[get_index(cube.r0, cube.g0, cube.b0)];
-    let hypotenuse = f32(dr * dr + dg * dg + db * db);
-    let vol = f32(volume(cube, &moments.w));
+    let hypotenuse = dr * dr + dg * dg + db * db;
     return (f32(xx) - hypotenuse / vol);
 }
 
 fn bottom(cube: Box, dir: u32, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> i32 {
     if (dir == 0) {
-        return (
-            -i32((*moment)[get_index(cube.r0, cube.g1, cube.b1)]) +
-            i32((*moment)[get_index(cube.r0, cube.g1, cube.b0)]) +
-            i32((*moment)[get_index(cube.r0, cube.g0, cube.b1)]) -
-            i32((*moment)[get_index(cube.r0, cube.g0, cube.b0)])
+        return i32(
+            (*moment)[get_index(cube.r0, cube.g1, cube.b0)] -
+            (*moment)[get_index(cube.r0, cube.g1, cube.b1)] +
+            (*moment)[get_index(cube.r0, cube.g0, cube.b1)] -
+            (*moment)[get_index(cube.r0, cube.g0, cube.b0)]
         );
     } else if (dir == 1) {
-        return (
-            -i32((*moment)[get_index(cube.r1, cube.g0, cube.b1)]) +
-            i32((*moment)[get_index(cube.r1, cube.g0, cube.b0)]) +
-            i32((*moment)[get_index(cube.r0, cube.g0, cube.b1)]) -
-            i32((*moment)[get_index(cube.r0, cube.g0, cube.b0)])
+        return i32(
+            (*moment)[get_index(cube.r1, cube.g0, cube.b0)] -
+            (*moment)[get_index(cube.r1, cube.g0, cube.b1)] +
+            (*moment)[get_index(cube.r0, cube.g0, cube.b1)] -
+            (*moment)[get_index(cube.r0, cube.g0, cube.b0)]
         );
     } else if (dir == 2) {
-        return (
-            -i32((*moment)[get_index(cube.r1, cube.g1, cube.b0)]) +
-            i32((*moment)[get_index(cube.r1, cube.g1, cube.b1)]) +
-            i32((*moment)[get_index(cube.r0, cube.g1, cube.b0)]) -
-            i32((*moment)[get_index(cube.r0, cube.g1, cube.b1)])
+        return i32(
+            (*moment)[get_index(cube.r1, cube.g0, cube.b0)] -
+            (*moment)[get_index(cube.r1, cube.g1, cube.b0)] +
+            (*moment)[get_index(cube.r0, cube.g1, cube.b0)] -
+            (*moment)[get_index(cube.r0, cube.g0, cube.b0)]
         );
     }
     return 0;
@@ -94,25 +97,25 @@ fn bottom(cube: Box, dir: u32, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> 
 
 fn top(cube: Box, dir: u32, cut: u32, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> i32 {
     if (dir == 0) {
-        return (
-            i32((*moment)[get_index(cut, cube.g1, cube.b1)]) -
-            i32((*moment)[get_index(cut, cube.g1, cube.b0)]) -
-            i32((*moment)[get_index(cut, cube.g0, cube.b1)]) +
-            i32((*moment)[get_index(cut, cube.g0, cube.b0)])
+        return i32(
+            (*moment)[get_index(cut, cube.g1, cube.b1)] -
+            (*moment)[get_index(cut, cube.g1, cube.b0)] -
+            (*moment)[get_index(cut, cube.g0, cube.b1)] +
+            (*moment)[get_index(cut, cube.g0, cube.b0)]
         );
     } else if (dir == 1) {
-        return (
-            i32((*moment)[get_index(cube.r1, cut, cube.b1)]) -
-            i32((*moment)[get_index(cube.r1, cut, cube.b0)]) -
-            i32((*moment)[get_index(cube.r0, cut, cube.b1)]) +
-            i32((*moment)[get_index(cube.r0, cut, cube.b0)])
+        return i32(
+            (*moment)[get_index(cube.r1, cut, cube.b1)] -
+            (*moment)[get_index(cube.r1, cut, cube.b0)] -
+            (*moment)[get_index(cube.r0, cut, cube.b1)] +
+            (*moment)[get_index(cube.r0, cut, cube.b0)]
         );
     } else if (dir == 2) {
-        return (
-            i32((*moment)[get_index(cube.r1, cube.g1, cut)]) -
-            i32((*moment)[get_index(cube.r1, cube.g0, cut)]) -
-            i32((*moment)[get_index(cube.r0, cube.g1, cut)]) +
-            i32((*moment)[get_index(cube.r0, cube.g0, cut)])
+        return i32(
+            (*moment)[get_index(cube.r1, cube.g1, cut)] -
+            (*moment)[get_index(cube.r1, cube.g0, cut)] -
+            (*moment)[get_index(cube.r0, cube.g1, cut)] +
+            (*moment)[get_index(cube.r0, cube.g0, cut)]
         );
     }
     return 0;
@@ -124,8 +127,8 @@ struct MaxVarianceResult {
 }
 
 fn find_max_variance_cut(cuts_variances: ptr<storage, array<f32>, read_write>, first: u32, last: u32) -> MaxVarianceResult {
-    var max_variance = f32(0.0);
-    var max_variance_idx = 1u;
+    var max_variance = (*cuts_variances)[first];
+    var max_variance_idx = first;
 
     for (var i = first; i < last; i++) {
         if ((*cuts_variances)[i] > max_variance) {
@@ -151,57 +154,52 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     } else if (channel == 1) {
         first = cube.g0 + 1;
         last = cube.g1;
-    } else {
+    } else if (channel == 2) {
         first = cube.b0 + 1;
         last = cube.b1;
     }
 
-    if (cut >= first && cut < last) {
-        let whole_r = i32(volume(cube, &moments.r));
-        let whole_g = i32(volume(cube, &moments.g));
-        let whole_b = i32(volume(cube, &moments.b));
-        let whole_w = i32(volume(cube, &moments.w));
+    if (cut >= first && cut < last && channel < 3) {
+        let whole_r = volume(cube, &moments.r);
+        let whole_g = volume(cube, &moments.g);
+        let whole_b = volume(cube, &moments.b);
+        let whole_w = volume(cube, &moments.w);
 
-        let bottom_r = bottom(cube, channel, &moments.r);
-        let bottom_g = bottom(cube, channel, &moments.g);
-        let bottom_b = bottom(cube, channel, &moments.b);
-        let bottom_w = bottom(cube, channel, &moments.w);
+        let bottom_r = f32(bottom(cube, channel, &moments.r));
+        let bottom_g = f32(bottom(cube, channel, &moments.g));
+        let bottom_b = f32(bottom(cube, channel, &moments.b));
+        let bottom_w = f32(bottom(cube, channel, &moments.w));
 
-        let top_r = top(cube, channel, cut, &moments.r);
-        let top_g = top(cube, channel, cut, &moments.g);
-        let top_b = top(cube, channel, cut, &moments.b);
-        let top_w = top(cube, channel, cut, &moments.w);
+        let top_r = f32(top(cube, channel, cut, &moments.r));
+        let top_g = f32(top(cube, channel, cut, &moments.g));
+        let top_b = f32(top(cube, channel, cut, &moments.b));
+        let top_w = f32(top(cube, channel, cut, &moments.w));
 
-        var half_r = bottom_r + top_r;
-        var half_g = bottom_g + top_g;
-        var half_b = bottom_b + top_b;
-        var half_w = bottom_w + top_w;
+        var half_r = f32(bottom_r) + f32(top_r);
+        var half_g = f32(bottom_g) + f32(top_g);
+        var half_b = f32(bottom_b) + f32(top_b);
+        var half_w = f32(bottom_w) + f32(top_w);
 
         var variance = f32(0.0);
         if (half_w > 0) {
-            var numerator = f32(half_r * half_r + half_g * half_g + half_b * half_b);
-            var denominator = f32(half_w); 
-            variance = numerator / denominator;
+            variance = (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
 
-            half_r = whole_r - half_r;
-            half_g = whole_g - half_g;
-            half_b = whole_b - half_b;
-            half_w = whole_w - half_w;
+            half_r = f32(whole_r) - half_r;
+            half_g = f32(whole_g) - half_g;
+            half_b = f32(whole_b) - half_b;
+            half_w = f32(whole_w) - half_w;
 
             if (half_w > 0) {
-                numerator = f32(half_r * half_r + half_g * half_g + half_b * half_b);
-                denominator = f32(half_w); 
-                variance += numerator / denominator;
+                variance += (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
             } else {
                 variance = 0.0;
             }
         }
         if (channel == 0) {
-            // cut_variances_r[cut] = f32(whole_w - half_w);
             cut_variances_r[cut] = variance;
         } else if (channel == 1) {
             cut_variances_g[cut] = variance;
-        } else {
+        } else if (channel == 2) {
             cut_variances_b[cut] = variance;
         }
     }
@@ -270,14 +268,13 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
             new_cube.b0 = chosen_cut;
         }
 
-        cubes[current_cube_idx] = cube;
         cubes[total_cubes_num] = new_cube;
 
-        variances[current_cube_idx] = variance(cube);
+        variances[current_cube_idx] = variance(cubes[current_cube_idx]);
         variances[total_cubes_num] = variance(new_cube);
 
-        var next_idx = total_cubes_num;
-        var next_variance = variance(new_cube);
+        var next_idx = 0u;
+        var next_variance = variances[0];
         for (var i = 0u; i <= total_cubes_num; i++) {
             if (variances[i] > next_variance) {
                 next_variance = variances[i];
