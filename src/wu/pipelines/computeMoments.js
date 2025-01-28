@@ -17,7 +17,7 @@ export async function setupComputeMoments(device, momentsBindGroupLayout) {
         ]
     });
     const computeMomentsModule = device.createShaderModule({
-        code: await fetch('src/shaders/compute_moments.wgsl').then(res => res.text())
+        code: await fetch('src/wu/shaders/compute_moments.wgsl').then(res => res.text())
     });
     const computeMomentsPipelineLayout = device.createPipelineLayout({
         bindGroupLayouts: [momentsBindGroupLayout, computeMomentsAxisBindGroupLayout]

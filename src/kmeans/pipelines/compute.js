@@ -1,4 +1,4 @@
-import params from '../params.js';
+import params from '../../params.js';
 
 export async function setupCompute(device, source) {
     const canvas = new OffscreenCanvas(source.width, source.height);
@@ -73,10 +73,10 @@ export async function setupCompute(device, source) {
     device.queue.writeBuffer(kUniformBuffer, 0, new Uint32Array([params.K]));
 
     const assignModule = device.createShaderModule({
-        code: await fetch('src/shaders/assign.wgsl').then(res => res.text())
+        code: await fetch('src/kmeans/shaders/assign.wgsl').then(res => res.text())
     });
     const updateModule = device.createShaderModule({
-        code: await fetch('src/shaders/update.wgsl').then(res => res.text())
+        code: await fetch('src/kmeans/shaders/update.wgsl').then(res => res.text())
     });
 
     const computeBindGroupLayout = device.createBindGroupLayout({

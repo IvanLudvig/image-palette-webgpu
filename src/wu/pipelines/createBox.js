@@ -1,4 +1,4 @@
-import params from '../params.js';
+import params from '../../params.js';
 
 export async function setupCreateBox(device) {
     const SIDE_LENGTH = 33;
@@ -115,7 +115,7 @@ export async function setupCreateBox(device) {
     });
 
     const createBoxModule = device.createShaderModule({
-        code: await fetch('src/shaders/create_box.wgsl').then(res => res.text())
+        code: await fetch('src/wu/shaders/create_box.wgsl').then(res => res.text())
     });
     const createBoxPipelineLayout = device.createPipelineLayout({
         bindGroupLayouts: [momentsBindGroupLayout, cubesBindGroupLayout, cutBindGroupLayout]

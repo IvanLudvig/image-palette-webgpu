@@ -97,7 +97,7 @@ export async function setupBuildHistogram(device, source) {
     });
 
     const buildHistogramModule = device.createShaderModule({
-        code: await fetch('src/shaders/build_histogram.wgsl').then(res => res.text())
+        code: await fetch('src/wu/shaders/build_histogram.wgsl').then(res => res.text())
     });
 
     const buildHistogramPipeline = device.createComputePipeline({

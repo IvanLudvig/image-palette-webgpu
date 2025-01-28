@@ -1,11 +1,11 @@
-import params from './params.js';
+import params from '../params.js';
 import { setupBuildHistogram } from './pipelines/buildHistogram.js';
 import { setupComputeMoments } from './pipelines/computeMoments.js';
 import { setupCreateBox } from './pipelines/createBox.js';
 import { setupCreateResult } from './pipelines/createResult.js';
-import { floatArrayToHex } from './utils.js';
+import { floatArrayToHex } from '../utils.js';
 
-export async function run(imageSource) {
+export async function extractDominantColors(imageSource) {
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();
     if (!device) {
@@ -144,9 +144,5 @@ export async function run(imageSource) {
     const results = new Uint32Array(mappedData.slice(0));
     stagingResultsBuffer.unmap();
 
-    const floatResults = Float32Array.from(results).map(x => x / 255);
-    console.log(floatArrayToHex(floatResults));
+    return floatArrayToHex(Float32Array.from(results).map(x => x / 255));
 }
-
-const image = document.querySelector('img');
-run(image);

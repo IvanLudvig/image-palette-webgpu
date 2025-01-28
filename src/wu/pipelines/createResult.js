@@ -1,4 +1,4 @@
-import params from '../params.js';
+import params from '../../params.js';
 
 export async function setupCreateResult(device, momentsBindGroupLayout, cubesBuffer, totalCubesNumUniformBuffer) {
     const cubesResultBindGroupLayout = device.createBindGroupLayout({
@@ -39,7 +39,7 @@ export async function setupCreateResult(device, momentsBindGroupLayout, cubesBuf
     });
 
     const createResultModule = device.createShaderModule({
-        code: await fetch('src/shaders/create_result.wgsl').then(res => res.text())
+        code: await fetch('src/wu/shaders/create_result.wgsl').then(res => res.text())
     });
     const createResultPipelineLayout = device.createPipelineLayout({
         bindGroupLayouts: [momentsBindGroupLayout, cubesResultBindGroupLayout, resultsBindGroupLayout]
