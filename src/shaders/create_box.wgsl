@@ -16,7 +16,7 @@ struct Moments {
     g: array<u32, TOTAL_SIZE>,
     b: array<u32, TOTAL_SIZE>,
     w: array<u32, TOTAL_SIZE>,
-    quad: array<u32, TOTAL_SIZE>
+    quad: array<f32, TOTAL_SIZE>
 }
 
 @group(0) @binding(0) var<storage> moments: Moments;
@@ -66,7 +66,7 @@ fn variance(cube: Box) -> f32 {
         moments.quad[get_index(cube.r0, cube.g0, cube.b1)] -
         moments.quad[get_index(cube.r0, cube.g0, cube.b0)];
     let hypotenuse = dr * dr + dg * dg + db * db;
-    return (f32(xx) - hypotenuse / vol);
+    return xx - hypotenuse / vol;
 }
 
 fn bottom(cube: Box, dir: u32, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> i32 {
@@ -180,9 +180,9 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
         var half_b = f32(bottom_b) + f32(top_b);
         var half_w = f32(bottom_w) + f32(top_w);
 
-        var variance = f32(0.0);
+        var variance_sum = 0f;
         if (half_w > 0) {
-            variance = (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
+            variance_sum = (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
 
             half_r = f32(whole_r) - half_r;
             half_g = f32(whole_g) - half_g;
@@ -190,17 +190,17 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
             half_w = f32(whole_w) - half_w;
 
             if (half_w > 0) {
-                variance += (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
+                variance_sum += (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
             } else {
-                variance = 0.0;
+                variance_sum = 0.0;
             }
         }
         if (channel == 0) {
-            cut_variances_r[cut] = variance;
+            cut_variances_r[cut] = variance_sum;
         } else if (channel == 1) {
-            cut_variances_g[cut] = variance;
+            cut_variances_g[cut] = variance_sum;
         } else if (channel == 2) {
-            cut_variances_b[cut] = variance;
+            cut_variances_b[cut] = variance_sum;
         }
     }
     

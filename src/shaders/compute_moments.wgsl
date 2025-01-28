@@ -27,7 +27,7 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     var sum_moments_r = 0u;
     var sum_moments_g = 0u;
     var sum_moments_b = 0u;
-    var sum_moments = 0u;
+    var sum_moments = 0f;
     for (var i = 1u; i < SIDE_LENGTH; i++) {
         if (axis == 0u) {
             index = get_index(i, x, y);
@@ -41,12 +41,20 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
         sum_moments_r += moments_r[index];
         sum_moments_g += moments_g[index];
         sum_moments_b += moments_b[index];
-        sum_moments += moments[index];
+
+        // to prevent u32 overflow in moments, they are stored as f32 bitcasted to u32
+        // after the first axis pass, they are all bitcasted f32
+        // using f32 initially is not possible since atomic operations are used in build_histogram
+        if (axis == 0) {
+            sum_moments += f32(moments[index]);
+        } else {
+            sum_moments += bitcast<f32>(moments[index]);
+        }
 
         weights[index] = sum_weights;
         moments_r[index] = sum_moments_r;
         moments_g[index] = sum_moments_g;
         moments_b[index] = sum_moments_b;
-        moments[index] = sum_moments;
+        moments[index] = bitcast<u32>(sum_moments);
     }
 }

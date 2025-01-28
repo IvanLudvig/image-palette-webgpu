@@ -16,7 +16,7 @@ struct Moments {
     g: array<u32, TOTAL_SIZE>,
     b: array<u32, TOTAL_SIZE>,
     w: array<u32, TOTAL_SIZE>,
-    quad: array<u32, TOTAL_SIZE>
+    quad: array<f32, TOTAL_SIZE>
 }
 
 @group(0) @binding(0) var<storage> moments: Moments;
