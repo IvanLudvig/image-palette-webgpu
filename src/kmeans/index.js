@@ -1,6 +1,6 @@
 import { setupCompute } from './pipelines/compute.js';
 import params from '../params.js';
-import { floatArrayToHex } from '../utils.js';
+import { floatArrayToHex } from '../utils/color_utils.js';
 
 export async function extractDominantColors(imageSource) {
     const adapter = await navigator.gpu?.requestAdapter();

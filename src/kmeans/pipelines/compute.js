@@ -72,11 +72,12 @@ export async function setupCompute(device, source) {
     });
     device.queue.writeBuffer(kUniformBuffer, 0, new Uint32Array([params.K]));
 
+    const SHADER_BASE_URL = new URL('../shaders/', import.meta.url).href;
     const assignModule = device.createShaderModule({
-        code: await fetch('src/kmeans/shaders/assign.wgsl').then(res => res.text())
+        code: await fetch(SHADER_BASE_URL + 'assign.wgsl').then(res => res.text())
     });
     const updateModule = device.createShaderModule({
-        code: await fetch('src/kmeans/shaders/update.wgsl').then(res => res.text())
+        code: await fetch(SHADER_BASE_URL + 'update.wgsl').then(res => res.text())
     });
 
     const computeBindGroupLayout = device.createBindGroupLayout({

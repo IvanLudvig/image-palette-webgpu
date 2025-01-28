@@ -114,8 +114,9 @@ export async function setupCreateBox(device) {
         ]
     });
 
+    const SHADER_BASE_URL = new URL('../shaders/', import.meta.url).href;
     const createBoxModule = device.createShaderModule({
-        code: await fetch('src/wu/shaders/create_box.wgsl').then(res => res.text())
+        code: await fetch(SHADER_BASE_URL + 'create_box.wgsl').then(res => res.text())
     });
     const createBoxPipelineLayout = device.createPipelineLayout({
         bindGroupLayouts: [momentsBindGroupLayout, cubesBindGroupLayout, cutBindGroupLayout]

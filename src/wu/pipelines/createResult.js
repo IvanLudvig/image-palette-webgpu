@@ -38,8 +38,9 @@ export async function setupCreateResult(device, momentsBindGroupLayout, cubesBuf
         ]
     });
 
+    const SHADER_BASE_URL = new URL('../shaders/', import.meta.url).href;
     const createResultModule = device.createShaderModule({
-        code: await fetch('src/wu/shaders/create_result.wgsl').then(res => res.text())
+        code: await fetch(SHADER_BASE_URL + 'create_result.wgsl').then(res => res.text())
     });
     const createResultPipelineLayout = device.createPipelineLayout({
         bindGroupLayouts: [momentsBindGroupLayout, cubesResultBindGroupLayout, resultsBindGroupLayout]

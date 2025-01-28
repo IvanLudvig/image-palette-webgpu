@@ -3,7 +3,7 @@ import { setupBuildHistogram } from './pipelines/buildHistogram.js';
 import { setupComputeMoments } from './pipelines/computeMoments.js';
 import { setupCreateBox } from './pipelines/createBox.js';
 import { setupCreateResult } from './pipelines/createResult.js';
-import { floatArrayToHex } from '../utils.js';
+import { floatArrayToHex } from '../utils/color_utils.js';
 
 export async function extractDominantColors(imageSource) {
     const adapter = await navigator.gpu?.requestAdapter();

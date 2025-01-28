@@ -96,8 +96,9 @@ export async function setupBuildHistogram(device, source) {
         bindGroupLayouts: [inputBindGroupLayout, buildHistogramBindGroupLayout]
     });
 
+    const SHADER_BASE_URL = new URL('../shaders/', import.meta.url).href;
     const buildHistogramModule = device.createShaderModule({
-        code: await fetch('src/wu/shaders/build_histogram.wgsl').then(res => res.text())
+        code: await fetch(SHADER_BASE_URL + 'build_histogram.wgsl').then(res => res.text())
     });
 
     const buildHistogramPipeline = device.createComputePipeline({
