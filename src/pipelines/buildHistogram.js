@@ -1,9 +1,5 @@
-import params from '../params.js';
-
-const TOTAL_SIZE = 35937;
-
 export async function setupBuildHistogram(device, source) {
-    const histogramSize = TOTAL_SIZE;
+    const histogramSize = 35937;
     const weightsBuffer = device.createBuffer({
         label: 'weights',
         size: histogramSize * 4,

@@ -16,9 +16,8 @@ export async function run(imageSource) {
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
     const width = source.width;
     const height = source.height;
-
-    const SIDE_LENGTH = 33;
-
+    
+    const TOTAL_SIZE = 35937;
     const {
         weightsBuffer,
         momentsRBuffer,
@@ -79,9 +78,6 @@ export async function run(imageSource) {
     }
 
     encoder = device.createCommandEncoder();
-
-    const TOTAL_SIZE = 35937;
-    
     encoder.copyBufferToBuffer(
         momentsRBuffer, 0,
         momentsBuffer, 0,
@@ -124,7 +120,6 @@ export async function run(imageSource) {
     }
 
     encoder = device.createCommandEncoder();
-
     const pass = encoder.beginComputePass();
     pass.setPipeline(createResultPipeline);
     pass.setBindGroup(0, momentsBindGroup);
@@ -149,7 +144,7 @@ export async function run(imageSource) {
     const results = new Uint32Array(mappedData.slice(0));
     stagingResultsBuffer.unmap();
 
-    const floatResults = Float32Array.from(results).map(x => x / 32);
+    const floatResults = Float32Array.from(results).map(x => x / 255);
     console.log(floatArrayToHex(floatResults));
 }
 

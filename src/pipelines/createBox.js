@@ -24,17 +24,17 @@ export async function setupCreateBox(device) {
 
     const cubesBuffer = device.createBuffer({
         size: 6 * params.K * Uint32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
     device.queue.writeBuffer(cubesBuffer, 0, new Uint32Array([0, SIDE_LENGTH - 1, 0, SIDE_LENGTH - 1, 0, SIDE_LENGTH - 1]));
 
     const variancesBuffer = device.createBuffer({
         size: params.K * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        usage: GPUBufferUsage.STORAGE
     });
     const currentCubeIdxBuffer = device.createBuffer({
         size: Uint32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        usage: GPUBufferUsage.STORAGE
     });
     const totalCubesNumUniformBuffer = device.createBuffer({
         size: Uint32Array.BYTES_PER_ELEMENT,
@@ -75,15 +75,15 @@ export async function setupCreateBox(device) {
     });
     const cutVariancesGBuffer = device.createBuffer({
         size: SIDE_LENGTH * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     });
     const cutVariancesBBuffer = device.createBuffer({
         size: SIDE_LENGTH * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     });
     const bestCutBuffer = device.createBuffer({
         size: 3 * Uint32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     });
     const cutBindGroupLayout = device.createBindGroupLayout({
         entries: [{
@@ -131,10 +131,8 @@ export async function setupCreateBox(device) {
         cubesBuffer,
         totalCubesNumUniformBuffer,
         momentsBindGroupLayout,
-        cubesBindGroupLayout,
         cubesBindGroup,
         cutBindGroup,
-        createBoxPipeline,
-        cutVariancesRBuffer
+        createBoxPipeline
     };
 }
