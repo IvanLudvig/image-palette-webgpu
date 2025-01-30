@@ -1,15 +1,15 @@
-import { extractDominantColorsGPU as extractWuColorsGPU } from '../wu/index.js';
-import { extractDominantColorsGPU as extractKMeansColorsGPU } from '../kmeans/index.js';
+import { extractDominantColorsWuGPU } from '../wu/index.js';
+import { extractDominantColorsKMeansGPU } from '../kmeans/index.js';
 import params from '../params.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
 
-export async function extractDominantColorsGPU(device, source) {
-    const wuResultsBuffer = await extractWuColorsGPU(device, source);
-    const resultsBuffer = await extractKMeansColorsGPU(device, source, wuResultsBuffer);
+export async function extractDominantColorsCelebiGPU(device, source) {
+    const wuResultsBuffer = await extractDominantColorsWuGPU(device, source);
+    const resultsBuffer = await extractDominantColorsKMeansGPU(device, source, wuResultsBuffer);
     return resultsBuffer;
 }
 
-export async function extractDominantColors(imageSource) {
+export async function extractDominantColorsCelebi(imageSource) {
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();
     if (!device) {
@@ -17,7 +17,7 @@ export async function extractDominantColors(imageSource) {
     }
 
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
-    const resultsBuffer = await extractDominantColorsGPU(device, source);
+    const resultsBuffer = await extractDominantColorsCelebiGPU(device, source);
     
     const stagingResultsBuffer = device.createBuffer({
         size: 3 * params.K * Float32Array.BYTES_PER_ELEMENT,

@@ -2,7 +2,7 @@ import { setupCompute } from './pipelines/compute.js';
 import params from '../params.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
 
-export async function extractDominantColorsGPU(device, source, initialCentroidsBuffer = null) {
+export async function extractDominantColorsKMeansGPU(device, source, initialCentroidsBuffer = null) {
     const {
         colorCount,
         centroidsBuffer,
@@ -73,7 +73,7 @@ export async function extractDominantColorsGPU(device, source, initialCentroidsB
     return centroidsBuffer;
 }
 
-export async function extractDominantColors(imageSource) {
+export async function extractDominantColorsKMeans(imageSource) {
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();
     if (!device) {
@@ -82,7 +82,7 @@ export async function extractDominantColors(imageSource) {
     }
 
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
-    const resultsBuffer = await extractDominantColorsGPU(device, source);
+    const resultsBuffer = await extractDominantColorsKMeansGPU(device, source);
     
     const stagingResultsBuffer = device.createBuffer({
         size: 3 * params.K * Float32Array.BYTES_PER_ELEMENT,

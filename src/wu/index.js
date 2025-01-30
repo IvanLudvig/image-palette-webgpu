@@ -5,7 +5,7 @@ import { setupCreateBox } from './pipelines/createBox.js';
 import { setupCreateResult } from './pipelines/createResult.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
 
-export async function extractDominantColorsGPU(device, source) {
+export async function extractDominantColorsWuGPU(device, source) {
     const width = source.width;
     const height = source.height;
     
@@ -124,7 +124,7 @@ export async function extractDominantColorsGPU(device, source) {
     return resultsBuffer;
 }
 
-export async function extractDominantColors(imageSource) {
+export async function extractDominantColorsWu(imageSource) {
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();
     if (!device) {
@@ -133,7 +133,7 @@ export async function extractDominantColors(imageSource) {
     }
 
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
-    const resultsBuffer = await extractDominantColorsGPU(device, source);
+    const resultsBuffer = await extractDominantColorsWuGPU(device, source);
     
     const stagingResultsBuffer = device.createBuffer({
         size: 3 * params.K * Uint32Array.BYTES_PER_ELEMENT,

@@ -1,4 +1,4 @@
-import { extractDominantColors } from '../../src/kmeans/index.js';
+import { extractDominantColorsKMeans } from '../../src/kmeans/index.js';
 import { renderColors, setupImageUploadListener } from '../demo_utils.js';
 
 const image = document.querySelector('img');
@@ -7,7 +7,7 @@ const palette = document.getElementById('color-palette');
 
 async function run() {
     palette.innerHTML = '';
-    const colors = await extractDominantColors(image);
+    const colors = await extractDominantColorsKMeans(image);
     renderColors(palette, colors);
 }
 
