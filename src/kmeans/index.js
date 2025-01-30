@@ -2,16 +2,7 @@ import { setupCompute } from './pipelines/compute.js';
 import params from '../params.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
 
-export async function extractDominantColors(imageSource) {
-    const adapter = await navigator.gpu?.requestAdapter();
-    const device = await adapter?.requestDevice();
-    if (!device) {
-        window.alert('WebGPU not supported');
-        throw new Error('WebGPU not supported');
-    }
-
-    const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
-
+export async function extractDominantColorsGPU(device, source, initialCentroidsBuffer = null) {
     const {
         colorCount,
         centroidsBuffer,
@@ -19,21 +10,29 @@ export async function extractDominantColors(imageSource) {
         assignPipeline,
         updatePipeline,
         computeBindGroup
-    } = await setupCompute(device, source);
-
-    const stagingCentroidsBuffer = device.createBuffer({
-        label: 'centroids-staging',
-        size: 3 * params.K * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
-    });
+    } = await setupCompute(device, source, initialCentroidsBuffer);
 
     const stagingCentroidsDeltaBuffer = device.createBuffer({
         label: 'centroids-delta-staging',
-        size: params.K * Uint32Array.BYTES_PER_ELEMENT,
+        size: params.K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
     let encoder = device.createCommandEncoder();
+
+    if (initialCentroidsBuffer) {
+        encoder.copyBufferToBuffer(
+            initialCentroidsBuffer, 0,
+            centroidsBuffer, 0,
+            3 * params.K * Float32Array.BYTES_PER_ELEMENT
+        );
+    } else {
+        const centroids = new Float32Array(3 * params.K);
+        for (let i = 0; i < 3 * params.K; i++) {
+            centroids[i] = Math.random();
+        }
+        device.queue.writeBuffer(centroidsBuffer, 0, centroids);
+    }
 
     for (let i = 0; i < params.maxIterations; i++) {
         const assignPass = encoder.beginComputePass();
@@ -48,7 +47,7 @@ export async function extractDominantColors(imageSource) {
         updatePass.dispatchWorkgroups(params.K);
         updatePass.end();
 
-        if (i !== 0 && i % params.convergenceCheck == 0) {
+        if (i !== 0 && i % params.convergenceCheck === 0) {
             encoder.copyBufferToBuffer(
                 centroidsDeltaBuffer, 0,
                 stagingCentroidsDeltaBuffer, 0,
@@ -70,19 +69,38 @@ export async function extractDominantColors(imageSource) {
         }
     }
 
+    device.queue.submit([encoder.finish()]);
+    return centroidsBuffer;
+}
+
+export async function extractDominantColors(imageSource) {
+    const adapter = await navigator.gpu?.requestAdapter();
+    const device = await adapter?.requestDevice();
+    if (!device) {
+        window.alert('WebGPU not supported');
+        throw new Error('WebGPU not supported');
+    }
+
+    const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
+    const resultsBuffer = await extractDominantColorsGPU(device, source);
+    
+    const stagingResultsBuffer = device.createBuffer({
+        size: 3 * params.K * Float32Array.BYTES_PER_ELEMENT,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+    });
+    
+    const encoder = device.createCommandEncoder();
     encoder.copyBufferToBuffer(
-        centroidsBuffer, 0,
-        stagingCentroidsBuffer, 0,
+        resultsBuffer, 0,
+        stagingResultsBuffer, 0,
         3 * params.K * Float32Array.BYTES_PER_ELEMENT
     );
+    device.queue.submit([encoder.finish()]);
 
-    const commandBuffer = encoder.finish();
-    device.queue.submit([commandBuffer]);
-
-    await stagingCentroidsBuffer.mapAsync(GPUMapMode.READ, 0, params.K * 3 * Float32Array.BYTES_PER_ELEMENT);
-    const mappedData = stagingCentroidsBuffer.getMappedRange();
+    await stagingResultsBuffer.mapAsync(GPUMapMode.READ, 0, 3 * params.K * Float32Array.BYTES_PER_ELEMENT);
+    const mappedData = stagingResultsBuffer.getMappedRange();
     const colors = new Float32Array(mappedData.slice(0));
-    stagingCentroidsBuffer.unmap();
+    stagingResultsBuffer.unmap();
 
     const validColors = [];
     for (let i = 0; i < colors.length; i += 3) {

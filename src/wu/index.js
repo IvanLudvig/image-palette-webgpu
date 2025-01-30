@@ -5,15 +5,7 @@ import { setupCreateBox } from './pipelines/createBox.js';
 import { setupCreateResult } from './pipelines/createResult.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
 
-export async function extractDominantColors(imageSource) {
-    const adapter = await navigator.gpu?.requestAdapter();
-    const device = await adapter?.requestDevice();
-    if (!device) {
-        window.alert('WebGPU not supported');
-        throw new Error('WebGPU not supported');
-    }
-
-    const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
+export async function extractDominantColorsGPU(device, source) {
     const width = source.width;
     const height = source.height;
     
@@ -127,11 +119,28 @@ export async function extractDominantColors(imageSource) {
     pass.setBindGroup(2, resultsBindGroup);
     pass.dispatchWorkgroups(1);
     pass.end();
+    device.queue.submit([encoder.finish()]);
 
+    return resultsBuffer;
+}
+
+export async function extractDominantColors(imageSource) {
+    const adapter = await navigator.gpu?.requestAdapter();
+    const device = await adapter?.requestDevice();
+    if (!device) {
+        window.alert('WebGPU not supported');
+        throw new Error('WebGPU not supported');
+    }
+
+    const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
+    const resultsBuffer = await extractDominantColorsGPU(device, source);
+    
     const stagingResultsBuffer = device.createBuffer({
         size: 3 * params.K * Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
+    
+    const encoder = device.createCommandEncoder();
     encoder.copyBufferToBuffer(
         resultsBuffer, 0,
         stagingResultsBuffer, 0,

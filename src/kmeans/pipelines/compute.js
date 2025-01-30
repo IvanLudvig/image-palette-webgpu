@@ -42,17 +42,11 @@ export async function setupCompute(device, source) {
     });
     device.queue.writeBuffer(histogramBuffer, 0, histogramArray);
 
-    const centroids = new Float32Array(3 * params.K);
-    for (let i = 0; i < 3 * params.K; i++) {
-        centroids[i] = Math.random();
-    }
-
     const centroidsBuffer = device.createBuffer({
         label: 'centroids-compute',
-        size: centroids.byteLength,
+        size: 3 * params.K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     });
-    device.queue.writeBuffer(centroidsBuffer, 0, centroids);
 
     const clustersBuffer = device.createBuffer({
         label: 'clusters-compute',
