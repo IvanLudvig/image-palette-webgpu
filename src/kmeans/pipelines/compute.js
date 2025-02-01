@@ -1,6 +1,4 @@
-import params from '../../params.js';
-
-export async function setupCompute(device, source) {
+export async function setupCompute(device, source, K) {
     const canvas = new OffscreenCanvas(source.width, source.height);
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(source, 0, 0);
@@ -33,7 +31,7 @@ export async function setupCompute(device, source) {
         size: 2 * Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    device.queue.writeBuffer(countsUniformBuffer, 0, new Uint32Array([params.K, colorCount]));
+    device.queue.writeBuffer(countsUniformBuffer, 0, new Uint32Array([K, colorCount]));
 
     const histogramBuffer = device.createBuffer({
         label: 'histogram-compute',
@@ -44,7 +42,7 @@ export async function setupCompute(device, source) {
 
     const centroidsBuffer = device.createBuffer({
         label: 'centroids-compute',
-        size: 3 * params.K * Float32Array.BYTES_PER_ELEMENT,
+        size: 3 * K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     });
 
@@ -56,7 +54,7 @@ export async function setupCompute(device, source) {
 
     const centroidsDeltaBuffer = device.createBuffer({
         label: 'centroids-delta-compute',
-        size: params.K * Float32Array.BYTES_PER_ELEMENT,
+        size: K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     });
 
@@ -64,7 +62,7 @@ export async function setupCompute(device, source) {
         size: Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    device.queue.writeBuffer(kUniformBuffer, 0, new Uint32Array([params.K]));
+    device.queue.writeBuffer(kUniformBuffer, 0, new Uint32Array([K]));
 
     const SHADER_BASE_URL = new URL('../shaders/', import.meta.url).href;
     const assignModule = device.createShaderModule({

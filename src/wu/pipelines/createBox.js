@@ -1,6 +1,4 @@
-import params from '../../params.js';
-
-export async function setupCreateBox(device) {
+export async function setupCreateBox(device, K) {
     const SIDE_LENGTH = 33;
     const TOTAL_SIZE = 35937;
 
@@ -23,13 +21,13 @@ export async function setupCreateBox(device) {
     });
 
     const cubesBuffer = device.createBuffer({
-        size: 6 * params.K * Uint32Array.BYTES_PER_ELEMENT,
+        size: 6 * K * Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
     device.queue.writeBuffer(cubesBuffer, 0, new Uint32Array([0, SIDE_LENGTH - 1, 0, SIDE_LENGTH - 1, 0, SIDE_LENGTH - 1]));
 
     const variancesBuffer = device.createBuffer({
-        size: params.K * Float32Array.BYTES_PER_ELEMENT,
+        size: K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE
     });
     const currentCubeIdxBuffer = device.createBuffer({

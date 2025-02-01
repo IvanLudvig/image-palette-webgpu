@@ -1,3 +1,3 @@
-# Color Quantization Using WSMeans with WebGPU
+# Color Quantization with WebGPU
 
 Demo: https://ivanludvig.github.io/color-quantization-webgpu/

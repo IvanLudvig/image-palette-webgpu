@@ -63,3 +63,23 @@ h1 {
     color: #000;
     text-align: center;
 }
+
+.colors-num-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+#k-input {
+    padding: 4px;
+    border: 1px solid #000;
+    text-align: right;
+    font-size: 18px;
+}
+
+button {
+    padding: 8px 16px;
+    margin: auto;
+    text-align: center;
+    font-size: 18px;
+}

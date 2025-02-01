@@ -18,7 +18,7 @@ export function renderColors(palette, colors) {
     });
 }
 
-export function setupImageUploadListener(imageUpload, image, callback) {
+export function setupImageUploadListener(imageUpload, image) {
     imageUpload.addEventListener('change', async (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -26,11 +26,16 @@ export function setupImageUploadListener(imageUpload, image, callback) {
                 const imageUrl = URL.createObjectURL(file);
                 image.src = imageUrl;
                 await new Promise(resolve => image.onload = resolve);
-                await callback();
                 URL.revokeObjectURL(imageUrl);
             } else {
                 alert('Not an image file');
             }
         }
+    });
+}
+
+export function setupRunButtonListener(runButton, callback) {
+    runButton.addEventListener('click', async () => {
+        await callback();
     });
 }

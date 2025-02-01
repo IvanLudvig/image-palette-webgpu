@@ -1,11 +1,12 @@
-import params from '../params.js';
 import { setupBuildHistogram } from './pipelines/buildHistogram.js';
 import { setupComputeMoments } from './pipelines/computeMoments.js';
 import { setupCreateBox } from './pipelines/createBox.js';
 import { setupCreateResult } from './pipelines/createResult.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
 
-export async function extractDominantColorsWuGPU(device, source) {
+export async function extractDominantColorsWuGPU(device, source, K) {
+    const WORKGROUP_SIZE = 16;
+
     const width = source.width;
     const height = source.height;
     
@@ -37,26 +38,25 @@ export async function extractDominantColorsWuGPU(device, source) {
         cubesBindGroup,
         cutBindGroup,
         createBoxPipeline
-    } = await setupCreateBox(device);
+    } = await setupCreateBox(device, K);
 
     const {
         resultsBuffer,
         cubesResultBindGroup,
         resultsBindGroup,
         createResultPipeline
-    } = await setupCreateResult(device, momentsBindGroupLayout, cubesBuffer, totalCubesNumUniformBuffer);
+    } = await setupCreateResult(device, K, momentsBindGroupLayout, cubesBuffer, totalCubesNumUniformBuffer);
 
     let encoder = device.createCommandEncoder();
     const buildHistogramPass = encoder.beginComputePass();
     buildHistogramPass.setPipeline(buildHistogramPipeline);
     buildHistogramPass.setBindGroup(0, inputBindGroup);
     buildHistogramPass.setBindGroup(1, buildHistogramBindGroup);
-    buildHistogramPass.dispatchWorkgroups(Math.ceil(width / params.workgroupSize), Math.ceil(height / params.workgroupSize));
+    buildHistogramPass.dispatchWorkgroups(Math.ceil(width / WORKGROUP_SIZE), Math.ceil(height / WORKGROUP_SIZE));
     buildHistogramPass.end();
     device.queue.submit([encoder.finish()]);
 
-    const workGroupsPerDim = Math.ceil(32 / params.workgroupSize);
-
+    const workGroupsPerDim = Math.ceil(32 / WORKGROUP_SIZE);
     for (let axis = 0; axis < 3; axis++) {
         encoder = device.createCommandEncoder();
         const pass = encoder.beginComputePass();
@@ -97,7 +97,7 @@ export async function extractDominantColorsWuGPU(device, source) {
     );
     device.queue.submit([encoder.finish()]);
 
-    for (let i = 1; i < params.K; i++) {
+    for (let i = 1; i < K; i++) {
         encoder = device.createCommandEncoder();
         const pass = encoder.beginComputePass();
         pass.setPipeline(createBoxPipeline);
@@ -124,7 +124,7 @@ export async function extractDominantColorsWuGPU(device, source) {
     return resultsBuffer;
 }
 
-export async function extractDominantColorsWu(imageSource) {
+export async function extractDominantColorsWu(imageSource, K) {
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();
     if (!device) {
@@ -133,10 +133,10 @@ export async function extractDominantColorsWu(imageSource) {
     }
 
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
-    const resultsBuffer = await extractDominantColorsWuGPU(device, source);
+    const resultsBuffer = await extractDominantColorsWuGPU(device, source, K);
     
     const stagingResultsBuffer = device.createBuffer({
-        size: 3 * params.K * Uint32Array.BYTES_PER_ELEMENT,
+        size: 3 * K * Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
     
@@ -144,11 +144,11 @@ export async function extractDominantColorsWu(imageSource) {
     encoder.copyBufferToBuffer(
         resultsBuffer, 0,
         stagingResultsBuffer, 0,
-        3 * params.K * Uint32Array.BYTES_PER_ELEMENT
+        3 * K * Uint32Array.BYTES_PER_ELEMENT
     );
     device.queue.submit([encoder.finish()]);
 
-    await stagingResultsBuffer.mapAsync(GPUMapMode.READ, 0, 3 * params.K * Uint32Array.BYTES_PER_ELEMENT);
+    await stagingResultsBuffer.mapAsync(GPUMapMode.READ, 0, 3 * K * Uint32Array.BYTES_PER_ELEMENT);
     const mappedData = stagingResultsBuffer.getMappedRange();
     const results = new Uint32Array(mappedData.slice(0));
     stagingResultsBuffer.unmap();

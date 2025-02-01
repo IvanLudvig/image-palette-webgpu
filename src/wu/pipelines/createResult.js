@@ -1,6 +1,4 @@
-import params from '../../params.js';
-
-export async function setupCreateResult(device, momentsBindGroupLayout, cubesBuffer, totalCubesNumUniformBuffer) {
+export async function setupCreateResult(device, K, momentsBindGroupLayout, cubesBuffer, totalCubesNumUniformBuffer) {
     const cubesResultBindGroupLayout = device.createBindGroupLayout({
         entries: [{
             binding: 0,
@@ -21,7 +19,7 @@ export async function setupCreateResult(device, momentsBindGroupLayout, cubesBuf
     });
 
     const resultsBuffer = device.createBuffer({
-        size: 3 * params.K * Uint32Array.BYTES_PER_ELEMENT,
+        size: 3 * K * Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     });
     const resultsBindGroupLayout = device.createBindGroupLayout({

@@ -1,26 +1,26 @@
 import { extractDominantColorsWuGPU } from '../wu/index.js';
 import { extractDominantColorsKMeansGPU } from '../kmeans/index.js';
-import params from '../params.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
 
-export async function extractDominantColorsCelebiGPU(device, source) {
-    const wuResultsBuffer = await extractDominantColorsWuGPU(device, source);
-    const resultsBuffer = await extractDominantColorsKMeansGPU(device, source, wuResultsBuffer);
+export async function extractDominantColorsCelebiGPU(device, source, K) {
+    const wuResultsBuffer = await extractDominantColorsWuGPU(device, source, K);
+    const resultsBuffer = await extractDominantColorsKMeansGPU(device, source, K, wuResultsBuffer);
     return resultsBuffer;
 }
 
-export async function extractDominantColorsCelebi(imageSource) {
+export async function extractDominantColorsCelebi(imageSource, K) {
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();
     if (!device) {
+        window.alert('WebGPU not supported');
         throw new Error('WebGPU not supported');
     }
 
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
-    const resultsBuffer = await extractDominantColorsCelebiGPU(device, source);
+    const resultsBuffer = await extractDominantColorsCelebiGPU(device, source, K);
     
     const stagingResultsBuffer = device.createBuffer({
-        size: 3 * params.K * Float32Array.BYTES_PER_ELEMENT,
+        size: 3 * K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
     
@@ -28,11 +28,11 @@ export async function extractDominantColorsCelebi(imageSource) {
     encoder.copyBufferToBuffer(
         resultsBuffer, 0,
         stagingResultsBuffer, 0,
-        3 * params.K * Float32Array.BYTES_PER_ELEMENT
+        3 * K * Float32Array.BYTES_PER_ELEMENT
     );
     device.queue.submit([encoder.finish()]);
 
-    await stagingResultsBuffer.mapAsync(GPUMapMode.READ, 0, 3 * params.K * Float32Array.BYTES_PER_ELEMENT);
+    await stagingResultsBuffer.mapAsync(GPUMapMode.READ, 0, 3 * K * Float32Array.BYTES_PER_ELEMENT);
     const mappedData = stagingResultsBuffer.getMappedRange();
     const colors = new Float32Array(mappedData.slice(0));
     stagingResultsBuffer.unmap();
