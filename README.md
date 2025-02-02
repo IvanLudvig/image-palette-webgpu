@@ -1,3 +1,3 @@
-# Color Quantization with WebGPU
+# Image Dominant Colors Extraction using WebGPU
 
 Demo: https://ivanludvig.github.io/color-quantization-webgpu/
