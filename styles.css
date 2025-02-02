@@ -10,6 +10,7 @@ body {
 
 h1 {
     color: #000;
+    text-align: center;
 }
 
 ul {
@@ -18,5 +19,8 @@ ul {
 
 ul li {
     margin: 16px;
+}
+
+a {
     font-size: 1.25em;
 }

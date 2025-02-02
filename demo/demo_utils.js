@@ -33,9 +33,3 @@ export function setupImageUploadListener(imageUpload, image) {
         }
     });
 }
-
-export function setupRunButtonListener(runButton, callback) {
-    runButton.addEventListener('click', async () => {
-        await callback();
-    });
-}

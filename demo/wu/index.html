@@ -3,27 +3,26 @@
 <html>
   <head>
     <meta charset='UTF-8'>
-    <title>Dominant Color Extraction with Wu's Algorithm using WebGPU</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Dominant Colors Extraction using WebGPU with Wu Algorithm</title>
     <link rel='stylesheet' href='../styles.css'>
   </head>
   <body>
-    <h1>Dominant Color Extraction with Wu's Algorithm using WebGPU</h1>
+    <h1>Image Dominant Colors Extraction using WebGPU with Wu Algorithm</h1>
 
     <div class='container'>
-      <img src='../img/ex1.jpg' alt='Image' style='max-width: 100%; max-height: 512px;' />
-      <div id='color-palette' class='color-palette'></div>
-
       <div class='upload-container'>
-        <label for='image-upload'>Upload image</label>
+        <label for='image-upload'>Select or drag'n'drop an image file:</label>
         <input type='file' id='image-upload' accept='image/*'>
       </div>
 
       <div class='colors-num-container'>
-        <label for='k-input'>Number of colors</label>
+        <label for='k-input'>Select the number of colors:</label>
         <input type='number' id='k-input' min='1' max='16' value='4'>
       </div>
 
-      <button id='run-button'>Run</button>
+      <img src='../img/ex1.jpg' alt='Image' style='max-width: 100%; max-height: 256px;' />
+      <div id='color-palette' class='color-palette'></div>
     </div>
 
     <script type='module' src='demo.js'></script>
