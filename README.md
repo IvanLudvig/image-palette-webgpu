@@ -1,3 +1,6 @@
-# Image Dominant Colors Extraction using WebGPU
+A tiny zero-dependency browser package that extracts dominant color or color palette from an image using WebGPU API with various algorithms.
 
-Demo: https://ivanludvig.github.io/color-quantization-webgpu/
+# Live demo
+
+https://ivanludvig.github.io/color-quantization-webgpu/
+
