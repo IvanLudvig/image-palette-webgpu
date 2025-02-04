@@ -19,18 +19,17 @@ struct Moments {
     quad: array<f32, TOTAL_SIZE>
 }
 
+var<workgroup> cut_variances_r: array<f32, SIDE_LENGTH>;
+var<workgroup> cut_variances_g: array<f32, SIDE_LENGTH>;
+var<workgroup> cut_variances_b: array<f32, SIDE_LENGTH>;
+var<workgroup> best_cut: array<u32, 3>;
+
 @group(0) @binding(0) var<storage> moments: Moments;
 
 @group(1) @binding(0) var<storage, read_write> cubes: array<Box>;
 @group(1) @binding(1) var<storage, read_write> variances: array<f32>;
 @group(1) @binding(2) var<storage, read_write> current_cube_idx: u32;
 @group(1) @binding(3) var<uniform> total_cubes_num: u32;
-
-@group(2) @binding(0) var<storage, read_write> cut_variances_r: array<f32>;
-@group(2) @binding(1) var<storage, read_write> cut_variances_g: array<f32>;
-@group(2) @binding(2) var<storage, read_write> cut_variances_b: array<f32>;
-@group(2) @binding(3) var<storage, read_write> best_cut: array<u32>;
-
 
 fn get_index(r: u32, g: u32, b: u32) -> u32 {
     return (r << (2 * INDEX_BITS)) + (r << (INDEX_BITS + 1)) + r + (g << INDEX_BITS) + g + b;
@@ -126,7 +125,7 @@ struct MaxVarianceResult {
     max_variance_idx: u32,
 }
 
-fn find_max_variance_cut(cuts_variances: ptr<storage, array<f32>, read_write>, first: u32, last: u32) -> MaxVarianceResult {
+fn find_max_variance_cut(cuts_variances: ptr<workgroup, array<f32, SIDE_LENGTH>>, first: u32, last: u32) -> MaxVarianceResult {
     var max_variance = (*cuts_variances)[first];
     var max_variance_idx = first;
 
@@ -204,7 +203,6 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
         }
     }
     
-    storageBarrier();
     workgroupBarrier();
 
     if (cut == 0) {
@@ -229,7 +227,6 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
         }
     }
 
-    storageBarrier();
     workgroupBarrier();
     
     if (cut == 0 && channel == 0) {

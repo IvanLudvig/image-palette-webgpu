@@ -36,7 +36,6 @@ export async function extractDominantColorsWuGPU(device, source, K) {
         momentsBindGroupLayout,
         cubesBuffer,
         cubesBindGroup,
-        cutBindGroup,
         createBoxPipeline
     } = await setupCreateBox(device, K);
 
@@ -105,7 +104,6 @@ export async function extractDominantColorsWuGPU(device, source, K) {
 
         pass.setBindGroup(0, momentsBindGroup);
         pass.setBindGroup(1, cubesBindGroup);
-        pass.setBindGroup(2, cutBindGroup);
         pass.dispatchWorkgroups(1);
         pass.end();
         device.queue.submit([encoder.finish()]);
@@ -120,6 +118,7 @@ export async function extractDominantColorsWuGPU(device, source, K) {
     pass.dispatchWorkgroups(1);
     pass.end();
     device.queue.submit([encoder.finish()]);
+    await device.queue.onSubmittedWorkDone();
 
     return resultsBuffer;
 }
