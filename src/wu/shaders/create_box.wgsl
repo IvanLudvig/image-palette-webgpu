@@ -159,37 +159,37 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     }
 
     if (cut >= first && cut < last && channel < 3) {
-        let whole_r = volume(cube, &moments.r);
-        let whole_g = volume(cube, &moments.g);
-        let whole_b = volume(cube, &moments.b);
-        let whole_w = volume(cube, &moments.w);
+        let whole = vec4f(
+            volume(cube, &moments.r),
+            volume(cube, &moments.g),
+            volume(cube, &moments.b),
+            volume(cube, &moments.w)
+        );
 
-        let bottom_r = bottom(cube, channel, &moments.r);
-        let bottom_g = bottom(cube, channel, &moments.g);
-        let bottom_b = bottom(cube, channel, &moments.b);
-        let bottom_w = bottom(cube, channel, &moments.w);
+        let bottom = vec4f(
+            bottom(cube, channel, &moments.r),
+            bottom(cube, channel, &moments.g),
+            bottom(cube, channel, &moments.b),
+            bottom(cube, channel, &moments.w)
+        );
 
-        let top_r = top(cube, channel, cut, &moments.r);
-        let top_g = top(cube, channel, cut, &moments.g);
-        let top_b = top(cube, channel, cut, &moments.b);
-        let top_w = top(cube, channel, cut, &moments.w);
+        let top = vec4f(
+            top(cube, channel, cut, &moments.r),
+            top(cube, channel, cut, &moments.g),
+            top(cube, channel, cut, &moments.b),
+            top(cube, channel, cut, &moments.w)
+        );
 
-        var half_r = bottom_r + top_r;
-        var half_g = bottom_g + top_g;
-        var half_b = bottom_b + top_b;
-        var half_w = bottom_w + top_w;
+        var half = bottom + top;
 
         var variance_sum = 0f;
-        if (half_w > 0) {
-            variance_sum = (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
+        if (half[3] > 0) {
+            variance_sum = (half[0] * half[0] + half[1] * half[1] + half[2] * half[2]) / half[3];
 
-            half_r = whole_r - half_r;
-            half_g = whole_g - half_g;
-            half_b = whole_b - half_b;
-            half_w = whole_w - half_w;
+            half = whole - half;
 
-            if (half_w > 0) {
-                variance_sum += (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
+            if (half[3] > 0) {
+                variance_sum += (half[0] * half[0] + half[1] * half[1] + half[2] * half[2]) / half[3];
             } else {
                 variance_sum = 0f;
             }
