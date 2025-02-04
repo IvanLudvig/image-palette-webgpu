@@ -9,7 +9,7 @@ export async function extractDominantColorsWuGPU(device, source, K) {
 
     const width = source.width;
     const height = source.height;
-    
+
     const TOTAL_SIZE = 35937;
     const {
         weightsBuffer,
@@ -24,8 +24,7 @@ export async function extractDominantColorsWuGPU(device, source, K) {
     } = await setupBuildHistogram(device, source);
 
     const {
-        axisUniformBuffer,
-        computeMomentsAxisBindGroup,
+        computeMomentsAxisBindGroups,
         computeMomentsPipeline
     } = await setupComputeMoments(device, buildHistogramBindGroupLayout);
 
@@ -53,22 +52,17 @@ export async function extractDominantColorsWuGPU(device, source, K) {
     buildHistogramPass.setBindGroup(1, buildHistogramBindGroup);
     buildHistogramPass.dispatchWorkgroups(Math.ceil(width / WORKGROUP_SIZE), Math.ceil(height / WORKGROUP_SIZE));
     buildHistogramPass.end();
-    device.queue.submit([encoder.finish()]);
 
     const workGroupsPerDim = Math.ceil(32 / WORKGROUP_SIZE);
+    const momentPass = encoder.beginComputePass();
+    momentPass.setPipeline(computeMomentsPipeline);
+    momentPass.setBindGroup(0, buildHistogramBindGroup);
     for (let axis = 0; axis < 3; axis++) {
-        encoder = device.createCommandEncoder();
-        const pass = encoder.beginComputePass();
-        pass.setPipeline(computeMomentsPipeline);
-        device.queue.writeBuffer(axisUniformBuffer, 0, new Uint32Array([axis]));
-        pass.setBindGroup(0, buildHistogramBindGroup);
-        pass.setBindGroup(1, computeMomentsAxisBindGroup);
-        pass.dispatchWorkgroups(workGroupsPerDim, workGroupsPerDim);
-        pass.end();
-        device.queue.submit([encoder.finish()]);
+        momentPass.setBindGroup(1, computeMomentsAxisBindGroups[axis]);
+        momentPass.dispatchWorkgroups(workGroupsPerDim, workGroupsPerDim);
     }
+    momentPass.end();
 
-    encoder = device.createCommandEncoder();
     encoder.copyBufferToBuffer(
         momentsRBuffer, 0,
         momentsBuffer, 0,
@@ -133,12 +127,12 @@ export async function extractDominantColorsWu(imageSource, K) {
 
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
     const resultsBuffer = await extractDominantColorsWuGPU(device, source, K);
-    
+
     const stagingResultsBuffer = device.createBuffer({
         size: 3 * K * Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
-    
+
     const encoder = device.createCommandEncoder();
     encoder.copyBufferToBuffer(
         resultsBuffer, 0,
