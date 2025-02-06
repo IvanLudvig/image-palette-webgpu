@@ -13,7 +13,7 @@ fn dist(a: vec3f, b: vec3f) -> f32 {
     return sqrt(pow((a.x - b.x), 2) + pow((a.y - b.y), 2) + pow((a.z - b.z), 2));
 }
 
-@compute @workgroup_size(8)
+@compute @workgroup_size(16)
 fn cs(@builtin(global_invocation_id) id: vec3u) {
     let centroid = id.x;
 
@@ -44,9 +44,9 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
         let d = dist(old_pos, new_pos);
         centroids_delta[centroid] = d;
     } else {
-        centroids[3*centroid] = 0.0;
-        centroids[3*centroid + 1] = 0.0;
-        centroids[3*centroid + 2] = 0.0;
-        centroids_delta[centroid] = 1.0;
+        centroids[3*centroid] = -1.0;
+        centroids[3*centroid + 1] = -1.0;
+        centroids[3*centroid + 2] = -1.0;
+        centroids_delta[centroid] = 0.0;
     }
 }

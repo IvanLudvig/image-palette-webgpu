@@ -18,12 +18,12 @@ export async function extractDominantColorsCelebi(imageSource, K) {
 
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
     const resultsBuffer = await extractDominantColorsCelebiGPU(device, source, K);
-    
+
     const stagingResultsBuffer = device.createBuffer({
         size: 3 * K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
-    
+
     const encoder = device.createCommandEncoder();
     encoder.copyBufferToBuffer(
         resultsBuffer, 0,
@@ -39,10 +39,12 @@ export async function extractDominantColorsCelebi(imageSource, K) {
 
     const validColors = [];
     for (let i = 0; i < colors.length; i += 3) {
-        if (!isNaN(colors[i]) && !isNaN(colors[i + 1]) && !isNaN(colors[i + 2])) {
+        const isValid = [colors[i], colors[i + 1], colors[i + 2]].every(x => !isNaN(x) && x >= 0);
+        if (isValid) {
             validColors.push(colors[i], colors[i + 1], colors[i + 2]);
         }
     }
 
-    return floatArrayToHex(new Float32Array(validColors));
+    const hexColors = floatArrayToHex(new Float32Array(validColors));
+    return hexColors;
 }

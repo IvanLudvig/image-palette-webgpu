@@ -5,7 +5,6 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
     const MAX_ITERATIONS = 256;
     const CONVERGENCE_EPS = 0.01;
     const CONVERGENCE_CHECK = 8;
-    const WORKGROUP_SIZE = 16;
 
     const {
         colorCount,
@@ -42,13 +41,13 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
         const assignPass = encoder.beginComputePass();
         assignPass.setPipeline(assignPipeline);
         assignPass.setBindGroup(0, computeBindGroup);
-        assignPass.dispatchWorkgroups(Math.ceil(colorCount / WORKGROUP_SIZE));
+        assignPass.dispatchWorkgroups(Math.ceil(colorCount / 256));
         assignPass.end();
 
         const updatePass = encoder.beginComputePass();
         updatePass.setPipeline(updatePipeline);
         updatePass.setBindGroup(0, computeBindGroup);
-        updatePass.dispatchWorkgroups(K);
+        updatePass.dispatchWorkgroups(Math.ceil(K / 16));
         updatePass.end();
 
         if (i !== 0 && i % CONVERGENCE_CHECK === 0) {
@@ -74,6 +73,8 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
     }
 
     device.queue.submit([encoder.finish()]);
+    await device.queue.onSubmittedWorkDone();
+
     return centroidsBuffer;
 }
 
@@ -87,12 +88,12 @@ export async function extractDominantColorsKMeans(imageSource, K) {
 
     const source = await createImageBitmap(imageSource, { colorSpaceConversion: 'none' });
     const resultsBuffer = await extractDominantColorsKMeansGPU(device, source, K);
-    
+
     const stagingResultsBuffer = device.createBuffer({
         size: 3 * K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
-    
+
     const encoder = device.createCommandEncoder();
     encoder.copyBufferToBuffer(
         resultsBuffer, 0,
@@ -108,7 +109,8 @@ export async function extractDominantColorsKMeans(imageSource, K) {
 
     const validColors = [];
     for (let i = 0; i < colors.length; i += 3) {
-        if (!isNaN(colors[i]) && !isNaN(colors[i + 1]) && !isNaN(colors[i + 2])) {
+        const isValid = [colors[i], colors[i + 1], colors[i + 2]].every(x => !isNaN(x) && x >= 0);
+        if (isValid) {
             validColors.push(colors[i], colors[i + 1], colors[i + 2]);
         }
     }

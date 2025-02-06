@@ -24,14 +24,14 @@ struct Moments {
 @group(1) @binding(0) var<storage> cubes: array<Box>;
 @group(1) @binding(1) var<uniform> total_cubes_num: u32;
 
-@group(2) @binding(0) var<storage, read_write> results: array<u32>;
+@group(2) @binding(0) var<storage, read_write> results: array<f32>;
 
 fn get_index(r: u32, g: u32, b: u32) -> u32 {
     return (r << (2 * INDEX_BITS)) + (r << (INDEX_BITS + 1)) + r + (g << INDEX_BITS) + g + b;
 }
 
-fn volume(cube: Box, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> u32 {
-    return (
+fn volume(cube: Box, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> f32 {
+    return f32(
         (*moment)[get_index(cube.r1, cube.g1, cube.b1)] -
         (*moment)[get_index(cube.r1, cube.g1, cube.b0)] -
         (*moment)[get_index(cube.r1, cube.g0, cube.b1)] +
@@ -57,15 +57,16 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
 
     if (weight > 0) {
         if (channel == 0) {
-            let r = round(f32(volume(cube, &moments.r)) / f32(weight));
-            results[cube_idx * 3 + 0] = u32(r);
+            let r = volume(cube, &moments.r) / weight;
+            results[cube_idx * 3 + 0] = r / 255.0;
         } else if (channel == 1) {
-            let g = round(f32(volume(cube, &moments.g)) / f32(weight));
-            results[cube_idx * 3 + 1] = u32(g);
+            let g = volume(cube, &moments.g) / weight;
+            results[cube_idx * 3 + 1] = g / 255.0;
         } else {
-            let b = round(f32(volume(cube, &moments.b)) / f32(weight));
-            results[cube_idx * 3 + 2] = u32(b);
+            let b = volume(cube, &moments.b) / weight;
+            results[cube_idx * 3 + 2] = b / 255.0;
         }
+    } else {
+        results[cube_idx * 3 + channel] = -1.0;
     }
 }
-

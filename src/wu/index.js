@@ -129,7 +129,7 @@ export async function extractDominantColorsWu(imageSource, K) {
     const resultsBuffer = await extractDominantColorsWuGPU(device, source, K);
 
     const stagingResultsBuffer = device.createBuffer({
-        size: 3 * K * Uint32Array.BYTES_PER_ELEMENT,
+        size: 3 * K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
@@ -137,14 +137,15 @@ export async function extractDominantColorsWu(imageSource, K) {
     encoder.copyBufferToBuffer(
         resultsBuffer, 0,
         stagingResultsBuffer, 0,
-        3 * K * Uint32Array.BYTES_PER_ELEMENT
+        3 * K * Float32Array.BYTES_PER_ELEMENT
     );
     device.queue.submit([encoder.finish()]);
 
-    await stagingResultsBuffer.mapAsync(GPUMapMode.READ, 0, 3 * K * Uint32Array.BYTES_PER_ELEMENT);
+    await stagingResultsBuffer.mapAsync(GPUMapMode.READ, 0, 3 * K * Float32Array.BYTES_PER_ELEMENT);
     const mappedData = stagingResultsBuffer.getMappedRange();
-    const results = new Uint32Array(mappedData.slice(0));
+    const results = new Float32Array(mappedData.slice(0));
     stagingResultsBuffer.unmap();
 
-    return floatArrayToHex(Float32Array.from(results).map(x => x / 255));
+    const hexColors = floatArrayToHex(results.filter(x => x >= 0));
+    return hexColors;
 }

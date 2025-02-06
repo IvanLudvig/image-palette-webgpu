@@ -4,7 +4,7 @@ export async function setupCreateResult(device, K, momentsBindGroupLayout, cubes
             binding: 0,
             visibility: GPUShaderStage.COMPUTE,
             buffer: { type: 'read-only-storage' }
-        },{
+        }, {
             binding: 1,
             visibility: GPUShaderStage.COMPUTE,
             buffer: { type: 'uniform' }
@@ -19,7 +19,7 @@ export async function setupCreateResult(device, K, momentsBindGroupLayout, cubes
     });
 
     const resultsBuffer = device.createBuffer({
-        size: 3 * K * Uint32Array.BYTES_PER_ELEMENT,
+        size: 3 * K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     });
     const resultsBindGroupLayout = device.createBindGroupLayout({
