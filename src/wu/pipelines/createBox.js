@@ -67,57 +67,12 @@ export async function setupCreateBox(device, K) {
         ]
     });
 
-    const cutVariancesRBuffer = device.createBuffer({
-        size: SIDE_LENGTH * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
-    });
-    const cutVariancesGBuffer = device.createBuffer({
-        size: SIDE_LENGTH * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
-    });
-    const cutVariancesBBuffer = device.createBuffer({
-        size: SIDE_LENGTH * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
-    });
-    const bestCutBuffer = device.createBuffer({
-        size: 3 * Uint32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
-    });
-    const cutBindGroupLayout = device.createBindGroupLayout({
-        entries: [{
-            binding: 0,
-            visibility: GPUShaderStage.COMPUTE,
-            buffer: { type: 'storage' }
-        }, {
-            binding: 1,
-            visibility: GPUShaderStage.COMPUTE,
-            buffer: { type: 'storage' }
-        }, {
-            binding: 2,
-            visibility: GPUShaderStage.COMPUTE,
-            buffer: { type: 'storage' }
-        }, {
-            binding: 3,
-            visibility: GPUShaderStage.COMPUTE,
-            buffer: { type: 'storage' }
-        }]
-    });
-    const cutBindGroup = device.createBindGroup({
-        layout: cutBindGroupLayout,
-        entries: [
-            { binding: 0, resource: { buffer: cutVariancesRBuffer } },
-            { binding: 1, resource: { buffer: cutVariancesGBuffer } },
-            { binding: 2, resource: { buffer: cutVariancesBBuffer } },
-            { binding: 3, resource: { buffer: bestCutBuffer } }
-        ]
-    });
-
     const SHADER_BASE_URL = new URL('../shaders/', import.meta.url).href;
     const createBoxModule = device.createShaderModule({
         code: await fetch(SHADER_BASE_URL + 'create_box.wgsl').then(res => res.text())
     });
     const createBoxPipelineLayout = device.createPipelineLayout({
-        bindGroupLayouts: [momentsBindGroupLayout, cubesBindGroupLayout, cutBindGroupLayout]
+        bindGroupLayouts: [momentsBindGroupLayout, cubesBindGroupLayout]
     });
     const createBoxPipeline = device.createComputePipeline({
         layout: createBoxPipelineLayout,
@@ -131,7 +86,6 @@ export async function setupCreateBox(device, K) {
         totalCubesNumUniformBuffer,
         momentsBindGroupLayout,
         cubesBindGroup,
-        cutBindGroup,
         createBoxPipeline
     };
 }

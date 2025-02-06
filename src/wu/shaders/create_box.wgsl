@@ -19,6 +19,11 @@ struct Moments {
     quad: array<f32, TOTAL_SIZE>
 }
 
+var<workgroup> cut_variances_r: array<f32, SIDE_LENGTH>;
+var<workgroup> cut_variances_g: array<f32, SIDE_LENGTH>;
+var<workgroup> cut_variances_b: array<f32, SIDE_LENGTH>;
+var<workgroup> best_cut: array<u32, 3>;
+
 @group(0) @binding(0) var<storage> moments: Moments;
 
 @group(1) @binding(0) var<storage, read_write> cubes: array<Box>;
@@ -26,18 +31,12 @@ struct Moments {
 @group(1) @binding(2) var<storage, read_write> current_cube_idx: u32;
 @group(1) @binding(3) var<uniform> total_cubes_num: u32;
 
-@group(2) @binding(0) var<storage, read_write> cut_variances_r: array<f32>;
-@group(2) @binding(1) var<storage, read_write> cut_variances_g: array<f32>;
-@group(2) @binding(2) var<storage, read_write> cut_variances_b: array<f32>;
-@group(2) @binding(3) var<storage, read_write> best_cut: array<u32>;
-
-
 fn get_index(r: u32, g: u32, b: u32) -> u32 {
     return (r << (2 * INDEX_BITS)) + (r << (INDEX_BITS + 1)) + r + (g << INDEX_BITS) + g + b;
 }
 
-fn volume(cube: Box, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> u32 {
-    return (
+fn volume(cube: Box, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> f32 {
+    return f32(
         (*moment)[get_index(cube.r1, cube.g1, cube.b1)] -
         (*moment)[get_index(cube.r1, cube.g1, cube.b0)] -
         (*moment)[get_index(cube.r1, cube.g0, cube.b1)] +
@@ -50,13 +49,13 @@ fn volume(cube: Box, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> u32 {
 }
 
 fn variance(cube: Box) -> f32 {
-    let vol = f32(volume(cube, &moments.w));
-    if (vol <= 1) {
-        return 0.0;
+    let vol = volume(cube, &moments.w);
+    if (vol <= 1f) {
+        return 0f;
     }
-    let dr = f32(volume(cube, &moments.r));
-    let dg = f32(volume(cube, &moments.g));
-    let db = f32(volume(cube, &moments.b));
+    let dr = volume(cube, &moments.r);
+    let dg = volume(cube, &moments.g);
+    let db = volume(cube, &moments.b);
     let xx = moments.quad[get_index(cube.r1, cube.g1, cube.b1)] -
         moments.quad[get_index(cube.r1, cube.g1, cube.b0)] -
         moments.quad[get_index(cube.r1, cube.g0, cube.b1)] +
@@ -69,23 +68,23 @@ fn variance(cube: Box) -> f32 {
     return xx - hypotenuse / vol;
 }
 
-fn bottom(cube: Box, dir: u32, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> i32 {
+fn bottom(cube: Box, dir: u32, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> f32 {
     if (dir == 0) {
-        return i32(
+        return f32(
             (*moment)[get_index(cube.r0, cube.g1, cube.b0)] -
             (*moment)[get_index(cube.r0, cube.g1, cube.b1)] +
             (*moment)[get_index(cube.r0, cube.g0, cube.b1)] -
             (*moment)[get_index(cube.r0, cube.g0, cube.b0)]
         );
     } else if (dir == 1) {
-        return i32(
+        return f32(
             (*moment)[get_index(cube.r1, cube.g0, cube.b0)] -
             (*moment)[get_index(cube.r1, cube.g0, cube.b1)] +
             (*moment)[get_index(cube.r0, cube.g0, cube.b1)] -
             (*moment)[get_index(cube.r0, cube.g0, cube.b0)]
         );
     } else if (dir == 2) {
-        return i32(
+        return f32(
             (*moment)[get_index(cube.r1, cube.g0, cube.b0)] -
             (*moment)[get_index(cube.r1, cube.g1, cube.b0)] +
             (*moment)[get_index(cube.r0, cube.g1, cube.b0)] -
@@ -95,23 +94,23 @@ fn bottom(cube: Box, dir: u32, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> 
     return 0;
 }
 
-fn top(cube: Box, dir: u32, cut: u32, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> i32 {
+fn top(cube: Box, dir: u32, cut: u32, moment: ptr<storage, array<u32, TOTAL_SIZE>>) -> f32 {
     if (dir == 0) {
-        return i32(
+        return f32(
             (*moment)[get_index(cut, cube.g1, cube.b1)] -
             (*moment)[get_index(cut, cube.g1, cube.b0)] -
             (*moment)[get_index(cut, cube.g0, cube.b1)] +
             (*moment)[get_index(cut, cube.g0, cube.b0)]
         );
     } else if (dir == 1) {
-        return i32(
+        return f32(
             (*moment)[get_index(cube.r1, cut, cube.b1)] -
             (*moment)[get_index(cube.r1, cut, cube.b0)] -
             (*moment)[get_index(cube.r0, cut, cube.b1)] +
             (*moment)[get_index(cube.r0, cut, cube.b0)]
         );
     } else if (dir == 2) {
-        return i32(
+        return f32(
             (*moment)[get_index(cube.r1, cube.g1, cut)] -
             (*moment)[get_index(cube.r1, cube.g0, cut)] -
             (*moment)[get_index(cube.r0, cube.g1, cut)] +
@@ -126,11 +125,11 @@ struct MaxVarianceResult {
     max_variance_idx: u32,
 }
 
-fn find_max_variance_cut(cuts_variances: ptr<storage, array<f32>, read_write>, first: u32, last: u32) -> MaxVarianceResult {
+fn find_max_variance_cut(cuts_variances: ptr<workgroup, array<f32, SIDE_LENGTH>>, first: u32, last: u32) -> MaxVarianceResult {
     var max_variance = (*cuts_variances)[first];
     var max_variance_idx = first;
 
-    for (var i = first; i < last; i++) {
+    for (var i = first + 1; i < last; i++) {
         if ((*cuts_variances)[i] > max_variance) {
             max_variance = (*cuts_variances)[i];
             max_variance_idx = i;
@@ -160,39 +159,39 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     }
 
     if (cut >= first && cut < last && channel < 3) {
-        let whole_r = volume(cube, &moments.r);
-        let whole_g = volume(cube, &moments.g);
-        let whole_b = volume(cube, &moments.b);
-        let whole_w = volume(cube, &moments.w);
+        let whole = vec4f(
+            volume(cube, &moments.r),
+            volume(cube, &moments.g),
+            volume(cube, &moments.b),
+            volume(cube, &moments.w)
+        );
 
-        let bottom_r = f32(bottom(cube, channel, &moments.r));
-        let bottom_g = f32(bottom(cube, channel, &moments.g));
-        let bottom_b = f32(bottom(cube, channel, &moments.b));
-        let bottom_w = f32(bottom(cube, channel, &moments.w));
+        let bottom = vec4f(
+            bottom(cube, channel, &moments.r),
+            bottom(cube, channel, &moments.g),
+            bottom(cube, channel, &moments.b),
+            bottom(cube, channel, &moments.w)
+        );
 
-        let top_r = f32(top(cube, channel, cut, &moments.r));
-        let top_g = f32(top(cube, channel, cut, &moments.g));
-        let top_b = f32(top(cube, channel, cut, &moments.b));
-        let top_w = f32(top(cube, channel, cut, &moments.w));
+        let top = vec4f(
+            top(cube, channel, cut, &moments.r),
+            top(cube, channel, cut, &moments.g),
+            top(cube, channel, cut, &moments.b),
+            top(cube, channel, cut, &moments.w)
+        );
 
-        var half_r = f32(bottom_r) + f32(top_r);
-        var half_g = f32(bottom_g) + f32(top_g);
-        var half_b = f32(bottom_b) + f32(top_b);
-        var half_w = f32(bottom_w) + f32(top_w);
+        var half = bottom + top;
 
         var variance_sum = 0f;
-        if (half_w > 0) {
-            variance_sum = (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
+        if (half[3] > 0) {
+            variance_sum = (half[0] * half[0] + half[1] * half[1] + half[2] * half[2]) / half[3];
 
-            half_r = f32(whole_r) - half_r;
-            half_g = f32(whole_g) - half_g;
-            half_b = f32(whole_b) - half_b;
-            half_w = f32(whole_w) - half_w;
+            half = whole - half;
 
-            if (half_w > 0) {
-                variance_sum += (half_r * half_r + half_g * half_g + half_b * half_b) / half_w;
+            if (half[3] > 0) {
+                variance_sum += (half[0] * half[0] + half[1] * half[1] + half[2] * half[2]) / half[3];
             } else {
-                variance_sum = 0.0;
+                variance_sum = 0f;
             }
         }
         if (channel == 0) {
@@ -204,11 +203,10 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
         }
     }
     
-    storageBarrier();
     workgroupBarrier();
 
     if (cut == 0) {
-        var result = MaxVarianceResult(f32(0.0), 0u);
+        var result = MaxVarianceResult(0f, 0u);
 
         if (channel == 0) {
             result = find_max_variance_cut(&cut_variances_r, first, last);
@@ -229,7 +227,6 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
         }
     }
 
-    storageBarrier();
     workgroupBarrier();
     
     if (cut == 0 && channel == 0) {
