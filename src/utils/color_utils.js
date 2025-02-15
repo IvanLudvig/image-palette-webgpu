@@ -1,3 +1,8 @@
+/**
+ * Converts a float array to a hex color string.
+ * @param {Float32Array} floatArray - The float array to convert.
+ * @returns {string} The hex color string.
+ */
 export function floatArrayToHex(colors) {
     const hexColors = [];
     for (let i = 0; i < colors.length; i += 3) {

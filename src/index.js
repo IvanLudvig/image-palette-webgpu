@@ -1,43 +1,31 @@
-import { extractDominantColorsWu } from './wu/index.js';
-import { extractDominantColorsKMeans } from './kmeans/index.js';
-import { extractDominantColorsCelebi } from './celebi/index.js';
-import { floatArrayToHex } from './utils/color_utils.js';
-
 /**
- * Extracts dominant colors from an image source using WebGPU API with Wu algorithm.
+ * Extracts dominant colors from an image source using WebGPU API with various algorithms.
+ *
  * @param {ImageBitmapSource} imageSource - The image source to process.
- * @param {number} colorCount - The number of colors to extract.
- * @returns {Array} An array of dominant colors.
+ * @param {number} colorCount - The number of dominant colors to extract.
+ * @param {string} algorithm - The algorithm to use for color extraction. Possible values are:
+ *   - `wu`: Uses the Wu algorithm.
+ *   - `kmeans`: Uses the K-means algorithm.
+ *   - `celebi`: Uses the Celebi algorithm.
+ * @returns {Promise<Array<string>>} A promise that resolves to an array of dominant colors.
+ * @throws {Error} Throws an error if an unknown algorithm is specified.
  */
-export {
-    extractDominantColorsWu,
-};
+export async function extractDominantColors(imageSource, colorCount, algorithm) {
+    let extractFunction;
 
-/**
- * Extracts dominant colors from an image source using WebGPU API with K-Means algorithm.
- * @param {ImageBitmapSource} imageSource - The image source to process.
- * @param {number} colorCount - The number of colors to extract.
- * @returns {Array} An array of dominant colors.
- */
-export {
-    extractDominantColorsKMeans,
-};
+    switch (algorithm) {
+        case 'wu':
+            extractFunction = (await import('./wu/index.js')).extractDominantColorsWu;
+            break;
+        case 'kmeans':
+            extractFunction = (await import('./kmeans/index.js')).extractDominantColorsKMeans;
+            break;
+        case 'celebi':
+            extractFunction = (await import('./celebi/index.js')).extractDominantColorsCelebi;
+            break;
+        default:
+            throw new Error(`Unknown algorithm: ${algorithm}`);
+    }
 
-/**
- * Extracts dominant colors from an image source using WebGPU API with Celebi algorithm.
- * @param {ImageBitmapSource} imageSource - The image source to process.
- * @param {number} colorCount - The number of colors to extract.
- * @returns {Array} An array of dominant colors.
- */
-export {
-    extractDominantColorsCelebi,
-};
-
-/**
- * Converts a float array to a hex color string.
- * @param {Float32Array} floatArray - The float array to convert.
- * @returns {string} The hex color string.
- */
-export {
-    floatArrayToHex,
-};
+    return extractFunction(imageSource, colorCount);
+}

@@ -78,6 +78,12 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
     return centroidsBuffer;
 }
 
+/**
+ * Extracts dominant colors from an image source using WebGPU API with K-Means algorithm.
+ * @param {ImageBitmapSource} imageSource - The image source to process.
+ * @param {number} K - The number of dominant colors to extract.
+ * @returns {Promise<Array<string>>} A promise that resolves to an array of dominant colors.
+ */
 export async function extractDominantColorsKMeans(imageSource, K) {
     const adapter = await navigator.gpu?.requestAdapter();
     const device = await adapter?.requestDevice();

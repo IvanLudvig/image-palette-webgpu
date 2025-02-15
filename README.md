@@ -19,24 +19,14 @@ npm i image-palette-webgpu
 ### JS
 
 ```js
-import {
-  extractDominantColorsWu,
-  extractDominantColorsKMeans,
-  extractDominantColorsCelebi,
-  floatArrayToHex
-} from './node_modules/image-palette-webgpu/index.js';
+import { extractDominantColors } from './node_modules/image-palette-webgpu/index.js';
 ```
 
 ### HTML
 
 ```html
 <script type="module">
-  import {
-    extractDominantColorsWu,
-    extractDominantColorsKMeans,
-    extractDominantColorsCelebi,
-    floatArrayToHex
-  } from './node_modules/image-palette-webgpu/index.js';
+  import { extractDominantColors } from './node_modules/image-palette-webgpu/index.js';
 </script>
 ```
 
@@ -46,11 +36,7 @@ import {
 <script type="importmap">
   {
     "imports": {
-      "image-palette-webgpu": "./node_modules/image-palette-webgpu/index.js",
-      "image-palette-webgpu/wu": "./node_modules/image-palette-webgpu/wu/index.js",
-      "image-palette-webgpu/kmeans": "./node_modules/image-palette-webgpu/kmeans/index.js",
-      "image-palette-webgpu/celebi": "./node_modules/image-palette-webgpu/celebi/index.js",
-      "image-palette-webgpu/utils": "./node_modules/image-palette-webgpu/utils/color_utils.js"
+      "image-palette-webgpu": "./node_modules/image-palette-webgpu/index.js"
     }
   }
 </script>
@@ -59,21 +45,7 @@ import {
 #### JS
 
 ```js
-// Always prefer importing individual exports
-
-import { extractDominantColorsWu } from 'image-palette-webgpu/wu';
-import { extractDominantColorsKMeans } from 'image-palette-webgpu/wu';
-import { extractDominantColorsCelebi } from 'image-palette-webgpu/wu';
-import { floatArrayToHex } from 'image-palette-webgpu/wu';
-
-// Only if you have three-shaking
-
-import {
-  extractDominantColorsWu,
-  extractDominantColorsKMeans,
-  extractDominantColorsCelebi,
-  floatArrayToHex
-} from 'image-palette-webgpu';
+import { extractDominantColors } from 'image-palette-webgpu';
 ```
 
 #### HTML
@@ -99,14 +71,15 @@ import {
 
 # Use
 
-## HTML
-
 ## JS
 
 ```js
 const image = new Image();
 image.src = './image.png';
 const colorsCount = 5;
-const dominantColors = await extractDominantColorsCelebi(image, colorsCount);
+const algorithm = 'wu';
+const dominantColors = await extractDominantColors(image, colorsCount, algorithm);
 console.log(dominantColors); // ['#d65a58', '#c84c52', '#d65a59', '#bb464b', '#e3dbaa']
 ```
+
+## HTML
