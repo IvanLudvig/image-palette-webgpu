@@ -4,7 +4,7 @@ A tiny zero-dependency browser package that extracts dominant color or color pal
 
 # Live demo
 
-https://ivanludvig.github.io/color-quantization-webgpu/
+https://ivanludvig.dev/image-palette-webgpu/
 
 # Install
 
@@ -50,24 +50,77 @@ import { extractDominantColors } from 'image-palette-webgpu';
 
 #### HTML
 
+```html
+<script type="module">
+  import { extractDominantColors } from 'image-palette-webgpu';
+</script>
+```
+
 ### Dev Servers / Builders
 
 #### JS
+
+```js
+import { extractDominantColors } from 'image-palette-webgpu';
+```
+
 #### HTML
 
-### CDN
+```html
+<script type="module">
+  import { extractDominantColors } from 'image-palette-webgpu';
+</script>
+```
 
-#### UNPKG
-##### JS
-##### HTML
+## CDN
 
-#### ESM CDN
-##### JS
-##### HTML
+### UNPKG
 
-#### Skypack
-##### JS
-##### HTML
+#### JS
+
+```js
+import { extractDominantColors } from 'https://unpkg.com/image-palette-webgpu';
+```
+
+#### HTML
+
+```html
+<script type="module">
+  import { extractDominantColors } from 'https://unpkg.com/image-palette-webgpu';
+</script>
+```
+
+### ESM CDN
+
+#### JS
+
+```js
+import { extractDominantColors } from 'https://esm.sh/image-palette-webgpu';
+```
+
+#### HTML
+
+```html
+<script type="module">
+  import { extractDominantColors } from 'https://esm.sh/image-palette-webgpu';
+</script>
+```
+
+### Skypack
+
+#### JS
+
+```js
+import { extractDominantColors } from 'https://cdn.skypack.dev/image-palette-webgpu';
+```
+
+#### HTML
+
+```html
+<script type="module">
+  import { extractDominantColors } from 'https://cdn.skypack.dev/image-palette-webgpu';
+</script>
+```
 
 # Use
 
@@ -78,8 +131,7 @@ const image = new Image();
 image.src = './image.png';
 const colorsCount = 5;
 const algorithm = 'wu';
+await image.decode();
 const dominantColors = await extractDominantColors(image, colorsCount, algorithm);
 console.log(dominantColors); // ['#d65a58', '#c84c52', '#d65a59', '#bb464b', '#e3dbaa']
 ```
-
-## HTML

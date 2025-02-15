@@ -17,17 +17,7 @@
   "main": "./src/index.js",
   "type": "module",
   "module": "./src/index.js",
-  "exports": {
-    ".": "./src/index.js",
-    "./wu": "./src/wu/index.js",
-    "./kmeans": "./src/kmeans/index.js",
-    "./celebi": "./src/wu/celebi/index.js"
-  },
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/IvanLudvig/color-quantization-webgpu"
-  },
   "keywords": [
     "webgpu",
     "gpu",
