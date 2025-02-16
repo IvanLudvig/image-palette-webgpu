@@ -2,6 +2,33 @@
 
 A tiny zero-dependency browser package that extracts dominant color or color palette from an image using WebGPU API with various algorithms.
 
+# Table of contents
+
+- [Live demo](#live-demo)
+- [Install](#install)
+- [Import](#import)
+  * [Local](#local)
+    + [JS](#js)
+    + [HTML](#html)
+    + [Import maps](#import-maps)
+      - [JS](#js-1)
+      - [HTML](#html-1)
+    + [Dev Servers / Builders](#dev-servers--builders)
+      - [JS](#js-2)
+      - [HTML](#html-2)
+  * [CDN](#cdn)
+    + [UNPKG](#unpkg)
+      - [JS](#js-3)
+      - [HTML](#html-3)
+    + [ESM CDN](#esm-cdn)
+      - [JS](#js-4)
+      - [HTML](#html-4)
+    + [Skypack](#skypack)
+      - [JS](#js-5)
+      - [HTML](#html-5)
+- [Use](#use)
+  * [JS](#js-6)
+
 # Live demo
 
 https://ivanludvig.dev/image-palette-webgpu/

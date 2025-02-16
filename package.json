@@ -14,9 +14,9 @@
     }
   ],
   "version": "0.1.0",
-  "main": "./src/index.js",
+  "main": "index.js",
   "type": "module",
-  "module": "./src/index.js",
+  "module": "index.js",
   "license": "MIT",
   "keywords": [
     "webgpu",
