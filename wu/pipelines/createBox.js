@@ -74,7 +74,7 @@ export async function setupCreateBox(device, K) {
     const createBoxPipelineLayout = device.createPipelineLayout({
         bindGroupLayouts: [momentsBindGroupLayout, cubesBindGroupLayout]
     });
-    const createBoxPipeline = device.createComputePipeline({
+    const createBoxPipeline = await device.createComputePipelineAsync({
         layout: createBoxPipelineLayout,
         compute: { module: createBoxModule }
     });
