@@ -18,6 +18,10 @@
   "type": "module",
   "module": "index.js",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IvanLudvig/image-palette-webgpu.git"
+  },
   "keywords": [
     "webgpu",
     "gpu",
