@@ -1,4 +1,4 @@
-export async function setupCompute(device, source, K) {
+export async function setupAssign(device, source, K) {
     const canvas = new OffscreenCanvas(source.width, source.height);
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(source, 0, 0);
@@ -34,42 +34,27 @@ export async function setupCompute(device, source, K) {
     device.queue.writeBuffer(countsUniformBuffer, 0, new Uint32Array([K, colorCount]));
 
     const histogramBuffer = device.createBuffer({
-        label: 'histogram-compute',
+        label: 'histogram',
         size: histogramArray.byteLength,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
     device.queue.writeBuffer(histogramBuffer, 0, histogramArray);
 
     const centroidsBuffer = device.createBuffer({
-        label: 'centroids-compute',
+        label: 'centroids',
         size: 3 * K * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     });
 
     const clustersBuffer = device.createBuffer({
-        label: 'clusters-compute',
+        label: 'clusters',
         size: colorCount * Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     });
 
-    const centroidsDeltaBuffer = device.createBuffer({
-        label: 'centroids-delta-compute',
-        size: K * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
-    });
-
-    const kUniformBuffer = device.createBuffer({
-        size: Uint32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-    });
-    device.queue.writeBuffer(kUniformBuffer, 0, new Uint32Array([K]));
-
     const SHADER_BASE_URL = new URL('../shaders/', import.meta.url).href;
     const assignModule = device.createShaderModule({
         code: await fetch(SHADER_BASE_URL + 'assign.wgsl').then(res => res.text())
-    });
-    const updateModule = device.createShaderModule({
-        code: await fetch(SHADER_BASE_URL + 'update.wgsl').then(res => res.text())
     });
 
     const computeBindGroupLayout = device.createBindGroupLayout({
@@ -82,21 +67,6 @@ export async function setupCompute(device, source, K) {
             binding: 1,
             visibility: GPUShaderStage.COMPUTE,
             buffer: { type: 'uniform' }
-        },
-        {
-            binding: 2,
-            visibility: GPUShaderStage.COMPUTE,
-            buffer: { type: 'storage' }
-        },
-        {
-            binding: 3,
-            visibility: GPUShaderStage.COMPUTE,
-            buffer: { type: 'storage' }
-        },
-        {
-            binding: 4,
-            visibility: GPUShaderStage.COMPUTE,
-            buffer: { type: 'storage' }
         }]
     });
 
@@ -104,31 +74,46 @@ export async function setupCompute(device, source, K) {
         layout: computeBindGroupLayout,
         entries: [
             { binding: 0, resource: { buffer: histogramBuffer } },
-            { binding: 1, resource: { buffer: countsUniformBuffer } },
-            { binding: 2, resource: { buffer: centroidsBuffer } },
-            { binding: 3, resource: { buffer: clustersBuffer } },
-            { binding: 4, resource: { buffer: centroidsDeltaBuffer } }
+            { binding: 1, resource: { buffer: countsUniformBuffer } }
         ]
     });
-    const computePipelineLayout = device.createPipelineLayout({
-        bindGroupLayouts: [computeBindGroupLayout]
+
+    const assignBindGroupLayout = device.createBindGroupLayout({
+        entries: [{
+            binding: 0,
+            visibility: GPUShaderStage.COMPUTE,
+            buffer: { type: 'read-only-storage' }
+        },
+        {
+            binding: 1,
+            visibility: GPUShaderStage.COMPUTE,
+            buffer: { type: 'storage' }
+        }]
     });
 
-    const updatePipeline = device.createComputePipeline({
-        layout: computePipelineLayout,
-        compute: { module: updateModule }
+    const assignBindGroup = device.createBindGroup({
+        layout: assignBindGroupLayout,
+        entries: [
+            { binding: 0, resource: { buffer: centroidsBuffer } },
+            { binding: 1, resource: { buffer: clustersBuffer } }
+        ]
     });
+    const assignPipelineLayout = device.createPipelineLayout({
+        bindGroupLayouts: [computeBindGroupLayout, assignBindGroupLayout]
+    });
+
     const assignPipeline = device.createComputePipeline({
-        layout: computePipelineLayout,
+        layout: assignPipelineLayout,
         compute: { module: assignModule }
     });
 
     return {
         colorCount,
         centroidsBuffer,
-        centroidsDeltaBuffer,
+        clustersBuffer,
         assignPipeline,
-        updatePipeline,
-        computeBindGroup
+        computeBindGroup,
+        computeBindGroupLayout,
+        assignBindGroup
     };
 }

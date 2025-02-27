@@ -1,4 +1,5 @@
-import { setupCompute } from './pipelines/compute.js';
+import { setupAssign } from './pipelines/assign.js';
+import { setupUpdate } from './pipelines/update.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
 
 export async function extractDominantColorsKMeansGPU(device, source, K, initialCentroidsBuffer = null) {
@@ -9,11 +10,18 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
     const {
         colorCount,
         centroidsBuffer,
-        centroidsDeltaBuffer,
+        clustersBuffer,
         assignPipeline,
+        computeBindGroup,
+        computeBindGroupLayout,
+        assignBindGroup
+    } = await setupAssign(device, source, K);
+
+    const {
         updatePipeline,
-        computeBindGroup
-    } = await setupCompute(device, source, K);
+        updateBindGroup,
+        centroidsDeltaBuffer
+    } = await setupUpdate(device, K, computeBindGroupLayout, centroidsBuffer, clustersBuffer);
 
     const stagingCentroidsDeltaBuffer = device.createBuffer({
         label: 'centroids-delta-staging',
@@ -41,12 +49,14 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
         const assignPass = encoder.beginComputePass();
         assignPass.setPipeline(assignPipeline);
         assignPass.setBindGroup(0, computeBindGroup);
+        assignPass.setBindGroup(1, assignBindGroup);
         assignPass.dispatchWorkgroups(Math.ceil(colorCount / 256));
         assignPass.end();
 
         const updatePass = encoder.beginComputePass();
         updatePass.setPipeline(updatePipeline);
         updatePass.setBindGroup(0, computeBindGroup);
+        updatePass.setBindGroup(1, updateBindGroup);
         updatePass.dispatchWorkgroups(Math.ceil(K / 16));
         updatePass.end();
 
