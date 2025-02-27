@@ -3,10 +3,10 @@ struct Counts {
     colors: u32
 };
 
-@group(0) @binding(0) var<storage> histogram: array<f32>;
+@group(0) @binding(0) var<storage, read> histogram: array<f32>;
 @group(0) @binding(1) var<uniform> counts: Counts;
-@group(0) @binding(2) var<storage, read_write> centroids: array<f32>;
-@group(0) @binding(3) var<storage, read_write> clusters: array<u32>;
+@group(1) @binding(0) var<storage, read> centroids: array<f32>;
+@group(1) @binding(1) var<storage, read_write> clusters: array<u32>;
 
 fn dist(a: vec3f, b: vec3f) -> f32 {
     return pow((a.x - b.x), 2) + pow((a.y - b.y), 2) + pow((a.z - b.z), 2);
@@ -19,7 +19,6 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     }
 
     let pos = vec3f(histogram[id.x * 4], histogram[id.x * 4 + 1], histogram[id.x * 4 + 2]);
-    let count = histogram[id.x * 4 + 3];
 
     var min_dist = -1.;
     var closest = 0u;

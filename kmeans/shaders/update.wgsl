@@ -3,14 +3,14 @@ struct Counts {
     colors: u32
 };
 
-@group(0) @binding(0) var<storage> histogram: array<f32>;
+@group(0) @binding(0) var<storage, read> histogram: array<f32>;
 @group(0) @binding(1) var<uniform> counts: Counts;
-@group(0) @binding(2) var<storage, read_write> centroids: array<f32>;
-@group(0) @binding(3) var<storage, read_write> clusters: array<u32>;
-@group(0) @binding(4) var<storage, read_write> centroids_delta: array<f32>;
+@group(1) @binding(0) var<storage, read_write> centroids: array<f32>;
+@group(1) @binding(1) var<storage, read> clusters: array<u32>;
+@group(1) @binding(2) var<storage, read_write> centroids_delta: array<f32>;
 
 fn dist(a: vec3f, b: vec3f) -> f32 {
-    return sqrt(pow((a.x - b.x), 2) + pow((a.y - b.y), 2) + pow((a.z - b.z), 2));
+    return pow((a.x - b.x), 2) + pow((a.y - b.y), 2) + pow((a.z - b.z), 2);
 }
 
 @compute @workgroup_size(16)

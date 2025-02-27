@@ -19,9 +19,9 @@ struct Moments {
     quad: array<f32, TOTAL_SIZE>
 }
 
-@group(0) @binding(0) var<storage> moments: Moments;
+@group(0) @binding(0) var<storage, read> moments: Moments;
 
-@group(1) @binding(0) var<storage> cubes: array<Box>;
+@group(1) @binding(0) var<storage, read> cubes: array<Box>;
 @group(1) @binding(1) var<uniform> total_cubes_num: u32;
 
 @group(2) @binding(0) var<storage, read_write> results: array<f32>;

@@ -24,7 +24,7 @@ var<workgroup> cut_variances_g: array<f32, SIDE_LENGTH>;
 var<workgroup> cut_variances_b: array<f32, SIDE_LENGTH>;
 var<workgroup> best_cut: array<u32, 3>;
 
-@group(0) @binding(0) var<storage> moments: Moments;
+@group(0) @binding(0) var<storage, read> moments: Moments;
 
 @group(1) @binding(0) var<storage, read_write> cubes: array<Box>;
 @group(1) @binding(1) var<storage, read_write> variances: array<f32>;
