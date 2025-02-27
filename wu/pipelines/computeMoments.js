@@ -33,7 +33,7 @@ export async function setupComputeMoments(device, momentsBindGroupLayout) {
     const computeMomentsPipelineLayout = device.createPipelineLayout({
         bindGroupLayouts: [momentsBindGroupLayout, computeMomentsAxisBindGroupLayout]
     });
-    const computeMomentsPipeline = device.createComputePipeline({
+    const computeMomentsPipeline = await device.createComputePipelineAsync({
         layout: computeMomentsPipelineLayout,
         compute: { module: computeMomentsModule }
     });

@@ -74,7 +74,7 @@ export async function setupAssign(device, K, histogramArray, colorCount) {
         bindGroupLayouts: [computeBindGroupLayout, assignBindGroupLayout]
     });
 
-    const assignPipeline = device.createComputePipeline({
+    const assignPipeline = await device.createComputePipelineAsync({
         layout: assignPipelineLayout,
         compute: { module: assignModule }
     });

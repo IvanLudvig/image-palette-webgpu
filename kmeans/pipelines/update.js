@@ -40,7 +40,7 @@ export async function setupUpdate(device, K, computeBindGroupLayout, centroidsBu
         bindGroupLayouts: [computeBindGroupLayout, updateBindGroupLayout]
     });
 
-    const updatePipeline = device.createComputePipeline({
+    const updatePipeline = await device.createComputePipelineAsync({
         layout: updatePipelineLayout,
         compute: { module: updateModule }
     });

@@ -43,7 +43,7 @@ export async function setupCreateResult(device, K, momentsBindGroupLayout, cubes
     const createResultPipelineLayout = device.createPipelineLayout({
         bindGroupLayouts: [momentsBindGroupLayout, cubesResultBindGroupLayout, resultsBindGroupLayout]
     });
-    const createResultPipeline = device.createComputePipeline({
+    const createResultPipeline = await device.createComputePipelineAsync({
         layout: createResultPipelineLayout,
         compute: { module: createResultModule }
     });
