@@ -114,11 +114,11 @@ export async function setupCompute(device, source, K) {
         bindGroupLayouts: [computeBindGroupLayout]
     });
 
-    const updatePipeline = device.createComputePipeline({
+    const updatePipeline = await device.createComputePipelineAsync({
         layout: computePipelineLayout,
         compute: { module: updateModule }
     });
-    const assignPipeline = device.createComputePipeline({
+    const assignPipeline = await device.createComputePipelineAsync({
         layout: computePipelineLayout,
         compute: { module: assignModule }
     });
