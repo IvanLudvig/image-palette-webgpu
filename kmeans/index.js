@@ -1,21 +1,24 @@
 import { setupAssign } from './pipelines/assign.js';
 import { setupUpdate } from './pipelines/update.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
+import { buildHistogram } from '../utils/build_histogram.js';
 
 export async function extractDominantColorsKMeansGPU(device, source, K, initialCentroidsBuffer = null) {
     const MAX_ITERATIONS = 256;
     const CONVERGENCE_EPS = 0.01;
     const CONVERGENCE_CHECK = 8;
 
+    const histogramArray = buildHistogram(source);
+    const colorCount = histogramArray.length / 4;
+
     const {
-        colorCount,
         centroidsBuffer,
         clustersBuffer,
         assignPipeline,
         computeBindGroup,
         computeBindGroupLayout,
         assignBindGroup
-    } = await setupAssign(device, source, K);
+    } = await setupAssign(device, K, histogramArray, colorCount);
 
     const {
         updatePipeline,
