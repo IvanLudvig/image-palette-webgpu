@@ -156,9 +156,9 @@ import { extractDominantColors } from 'https://cdn.skypack.dev/image-palette-web
 ```js
 const image = new Image();
 image.src = './image.png';
-const colorCount = 5;
-const algorithm = 'wu';
+const colorCount = 4;
+const algorithm = 'celebi';
 await image.decode();
 const dominantColors = await extractDominantColors(image, colorCount, algorithm);
-console.log(dominantColors); // ['#d65a58', '#c84c52', '#d65a59', '#bb464b', '#e3dbaa']
+console.log(dominantColors); // ['#4285f4', '#db4437', '#f4b400', '#0f9d58']
 ```
