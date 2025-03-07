@@ -1,7 +1,7 @@
 @group(0) @binding(0) var tex: texture_2d<f32>;
 @group(1) @binding(0) var<storage, read_write> histogram: array<atomic<u32>>;
 
-const INDEX_BITS = 5u;
+const INDEX_BITS = 8u;
 
 fn get_index(r: u32, g: u32, b: u32) -> u32 {
     return (r << (2 * INDEX_BITS)) + (g << INDEX_BITS) + b;

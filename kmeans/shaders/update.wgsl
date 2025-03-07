@@ -2,7 +2,7 @@ struct Counts {
     centroids: u32
 };
 
-const INDEX_BITS = 5u;
+const INDEX_BITS = 8u;
 const MAX_VALUE = (1u << INDEX_BITS) - 1u;
 const MAX_VALUE_F32 = f32(MAX_VALUE);
 const COLOR_COUNT = 1u << (INDEX_BITS * 3u);

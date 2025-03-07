@@ -7,7 +7,7 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
     const MAX_ITERATIONS = 256;
     const CONVERGENCE_EPS = 0.01;
     const CONVERGENCE_CHECK = 8;
-    const INDEX_BITS = 5;
+    const INDEX_BITS = 8;
     const colorCount = (2 ** INDEX_BITS) ** 3;
 
     const {
@@ -69,7 +69,7 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
         assignPass.setPipeline(assignPipeline);
         assignPass.setBindGroup(0, computeBindGroup);
         assignPass.setBindGroup(1, assignBindGroup);
-        assignPass.dispatchWorkgroups(Math.ceil(colorCount / 256));
+        assignPass.dispatchWorkgroups(Math.ceil(colorCount / 256) - 1);
         assignPass.end();
 
         const updatePass = encoder.beginComputePass();
