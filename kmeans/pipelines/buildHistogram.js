@@ -1,9 +1,12 @@
 export async function setupBuildHistogram(device, source, colorCount) {
     const histogramBuffer = device.createBuffer({
         label: 'histogram',
-        size: colorCount * Uint32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+        size: 2 * colorCount * Uint32Array.BYTES_PER_ELEMENT,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+        mappedAtCreation: true
     });
+    new Uint32Array(histogramBuffer.getMappedRange()).fill(0);
+    histogramBuffer.unmap();
 
     const computeTexture = device.createTexture({
         format: 'rgba8unorm',

@@ -7,15 +7,14 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
     const MAX_ITERATIONS = 256;
     const CONVERGENCE_EPS = 0.01;
     const CONVERGENCE_CHECK = 8;
-    const INDEX_BITS = 8;
-    const colorCount = (2 ** INDEX_BITS) ** 3;
+    const COLOR_COUNT = 2 ** 16;
 
     const {
         histogramBuffer,
         histogramPipeline,
         inputBindGroup,
         histogramBindGroup
-    } = await setupBuildHistogram(device, source, colorCount);
+    } = await setupBuildHistogram(device, source, COLOR_COUNT);
 
     const {
         centroidsBuffer,
@@ -24,7 +23,7 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
         computeBindGroup,
         computeBindGroupLayout,
         assignBindGroup
-    } = await setupAssign(device, K, histogramBuffer, colorCount);
+    } = await setupAssign(device, K, histogramBuffer, COLOR_COUNT);
 
     const {
         updatePipeline,
@@ -69,7 +68,7 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
         assignPass.setPipeline(assignPipeline);
         assignPass.setBindGroup(0, computeBindGroup);
         assignPass.setBindGroup(1, assignBindGroup);
-        assignPass.dispatchWorkgroups(Math.ceil(colorCount / 256) - 1);
+        assignPass.dispatchWorkgroups(Math.ceil(COLOR_COUNT / 256));
         assignPass.end();
 
         const updatePass = encoder.beginComputePass();
