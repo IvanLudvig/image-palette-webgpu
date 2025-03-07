@@ -26,9 +26,9 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     let b = u32(pixel.b * 255.0);
 
     let bits_to_remove = 8u - INDEX_BITS;
-    let ir = (r >> bits_to_remove) + 1u;
-    let ig = (g >> bits_to_remove) + 1u;
-    let ib = (b >> bits_to_remove) + 1u;
+    let ir = r >> bits_to_remove;
+    let ig = g >> bits_to_remove;
+    let ib = b >> bits_to_remove;
     let index = get_index(ir, ig, ib);
     
     atomicAdd(&histogram[index], 1u);
