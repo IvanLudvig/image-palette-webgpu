@@ -1,11 +1,11 @@
 struct Counts {
-    centroids: u32,
-    colors: u32
+    centroids: u32
 };
 
 const INDEX_BITS = 5u;
 const MAX_VALUE = (1u << INDEX_BITS) - 1u;
 const MAX_VALUE_F32 = f32(MAX_VALUE);
+const COLOR_COUNT = 1u << (INDEX_BITS * 3u);
 
 @group(0) @binding(0) var<storage, read> histogram: array<u32>;
 @group(0) @binding(1) var<uniform> counts: Counts;
@@ -26,7 +26,7 @@ fn get_rgb(index: u32) -> vec3f {
 
 @compute @workgroup_size(256)
 fn cs(@builtin(global_invocation_id) id: vec3u) {
-    if (id.x >= counts.colors) {
+    if (id.x >= COLOR_COUNT) {
         return;
     }
 

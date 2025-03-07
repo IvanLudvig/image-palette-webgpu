@@ -1,9 +1,9 @@
 export async function setupAssign(device, K, histogramBuffer, colorCount) {
     const countsUniformBuffer = device.createBuffer({
-        size: 2 * Uint32Array.BYTES_PER_ELEMENT,
+        size: Uint32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    device.queue.writeBuffer(countsUniformBuffer, 0, new Uint32Array([K, colorCount]));
+    device.queue.writeBuffer(countsUniformBuffer, 0, new Uint32Array([K]));
 
     const centroidsBuffer = device.createBuffer({
         label: 'centroids',
