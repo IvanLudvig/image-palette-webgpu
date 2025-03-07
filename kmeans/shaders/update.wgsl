@@ -1,9 +1,13 @@
 struct Counts {
-    centroids: u32,
-    colors: u32
+    centroids: u32
 };
 
-@group(0) @binding(0) var<storage, read> histogram: array<f32>;
+const INDEX_BITS = 5u;
+const MAX_VALUE = (1u << INDEX_BITS) - 1u;
+const MAX_VALUE_F32 = f32(MAX_VALUE);
+const COLOR_COUNT = 1u << (INDEX_BITS * 3u);
+
+@group(0) @binding(0) var<storage, read> histogram: array<u32>;
 @group(0) @binding(1) var<uniform> counts: Counts;
 @group(1) @binding(0) var<storage, read_write> centroids: array<f32>;
 @group(1) @binding(1) var<storage, read> clusters: array<u32>;
@@ -12,6 +16,15 @@ struct Counts {
 fn dist(a: vec3f, b: vec3f) -> f32 {
     return pow((a.x - b.x), 2) + pow((a.y - b.y), 2) + pow((a.z - b.z), 2);
 }
+
+fn get_rgb(index: u32) -> vec3f {
+    let r = (index >> (2 * INDEX_BITS)) & MAX_VALUE;
+    let g = (index >> INDEX_BITS) & MAX_VALUE;
+    let b = index & MAX_VALUE;
+
+    return vec3f(f32(r) / MAX_VALUE_F32, f32(g) / MAX_VALUE_F32, f32(b) / MAX_VALUE_F32);
+}
+
 
 @compute @workgroup_size(16)
 fn cs(@builtin(global_invocation_id) id: vec3u) {
@@ -24,10 +37,10 @@ fn cs(@builtin(global_invocation_id) id: vec3u) {
     var sum = vec3f(0);
     var count = 0u;
 
-    for (var i = 0u; i < counts.colors; i++) {
-        if (clusters[i] == centroid) {
-            let pixel = vec3f(histogram[i * 4], histogram[i * 4 + 1], histogram[i * 4 + 2]);
-            let pixel_count = u32(histogram[i * 4 + 3]);
+    for (var i = 0u; i < COLOR_COUNT; i++) {
+        if (histogram[i] > 0u && clusters[i] == centroid) {
+            let pixel = get_rgb(i);
+            let pixel_count = histogram[i];
             sum += pixel * f32(pixel_count);
             count += pixel_count;
         }
