@@ -54,11 +54,14 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
         device.queue.writeBuffer(centroidsBuffer, 0, centroids);
     }
 
+    const width = source.width;
+    const height = source.height;
+
     const histogramPass = encoder.beginComputePass();
     histogramPass.setPipeline(histogramPipeline);
     histogramPass.setBindGroup(0, inputBindGroup);
     histogramPass.setBindGroup(1, histogramBindGroup);
-    histogramPass.dispatchWorkgroups(Math.ceil(colorCount / 16), Math.ceil(colorCount / 16));
+    histogramPass.dispatchWorkgroups(Math.ceil(width / 16), Math.ceil(height / 16));
     histogramPass.end();
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
