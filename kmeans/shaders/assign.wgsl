@@ -1,9 +1,19 @@
 struct Counts {
-    centroids: u32,
-    colors: u32
+    centroids: u32
 };
 
-@group(0) @binding(0) var<storage, read> histogram: array<f32>;
+struct KeyValue {
+    key: u32,
+    value: u32
+};
+
+const INDEX_BITS = 8u;
+const MAX_VALUE = (1u << INDEX_BITS) - 1u;
+const MAX_VALUE_F32 = f32(MAX_VALUE);
+const HASH_TABLE_SIZE = 1u << 16u;
+const EMPTY = 0u;
+
+@group(0) @binding(0) var<storage, read> histogram: array<KeyValue, HASH_TABLE_SIZE>;
 @group(0) @binding(1) var<uniform> counts: Counts;
 @group(1) @binding(0) var<storage, read> centroids: array<f32>;
 @group(1) @binding(1) var<storage, read_write> clusters: array<u32>;
@@ -12,13 +22,26 @@ fn dist(a: vec3f, b: vec3f) -> f32 {
     return pow((a.x - b.x), 2) + pow((a.y - b.y), 2) + pow((a.z - b.z), 2);
 }
 
+fn get_rgb(index: u32) -> vec3f {
+    let shiftedIndex = index - 1u;
+    let r = (shiftedIndex >> (2 * INDEX_BITS)) & MAX_VALUE;
+    let g = (shiftedIndex >> INDEX_BITS) & MAX_VALUE;
+    let b = shiftedIndex & MAX_VALUE;
+
+    return vec3f(f32(r) / MAX_VALUE_F32, f32(g) / MAX_VALUE_F32, f32(b) / MAX_VALUE_F32);
+}
+
 @compute @workgroup_size(256)
 fn cs(@builtin(global_invocation_id) id: vec3u) {
-    if (id.x >= counts.colors) {
+    if (id.x >= HASH_TABLE_SIZE) {
         return;
     }
 
-    let pos = vec3f(histogram[id.x * 4], histogram[id.x * 4 + 1], histogram[id.x * 4 + 2]);
+    if (histogram[id.x].key == EMPTY) {
+        return;
+    }
+
+    let pos = get_rgb(histogram[id.x].key);
 
     var min_dist = -1.;
     var closest = 0u;

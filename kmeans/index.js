@@ -1,15 +1,20 @@
 import { setupAssign } from './pipelines/assign.js';
 import { setupUpdate } from './pipelines/update.js';
+import { setupBuildHistogram } from './pipelines/buildHistogram.js';
 import { floatArrayToHex } from '../utils/color_utils.js';
-import { buildHistogram } from '../utils/build_histogram.js';
 
 export async function extractDominantColorsKMeansGPU(device, source, K, initialCentroidsBuffer = null) {
     const MAX_ITERATIONS = 256;
     const CONVERGENCE_EPS = 0.01;
     const CONVERGENCE_CHECK = 8;
+    const COLOR_COUNT = 2 ** 16;
 
-    const histogramArray = buildHistogram(source);
-    const colorCount = histogramArray.length / 4;
+    const {
+        histogramBuffer,
+        histogramPipeline,
+        inputBindGroup,
+        histogramBindGroup
+    } = await setupBuildHistogram(device, source, COLOR_COUNT);
 
     const {
         centroidsBuffer,
@@ -18,7 +23,7 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
         computeBindGroup,
         computeBindGroupLayout,
         assignBindGroup
-    } = await setupAssign(device, K, histogramArray, colorCount);
+    } = await setupAssign(device, K, histogramBuffer, COLOR_COUNT);
 
     const {
         updatePipeline,
@@ -48,12 +53,22 @@ export async function extractDominantColorsKMeansGPU(device, source, K, initialC
         device.queue.writeBuffer(centroidsBuffer, 0, centroids);
     }
 
+    const width = source.width;
+    const height = source.height;
+
+    const histogramPass = encoder.beginComputePass();
+    histogramPass.setPipeline(histogramPipeline);
+    histogramPass.setBindGroup(0, inputBindGroup);
+    histogramPass.setBindGroup(1, histogramBindGroup);
+    histogramPass.dispatchWorkgroups(Math.ceil(width / 16), Math.ceil(height / 16));
+    histogramPass.end();
+
     for (let i = 0; i < MAX_ITERATIONS; i++) {
         const assignPass = encoder.beginComputePass();
         assignPass.setPipeline(assignPipeline);
         assignPass.setBindGroup(0, computeBindGroup);
         assignPass.setBindGroup(1, assignBindGroup);
-        assignPass.dispatchWorkgroups(Math.ceil(colorCount / 256));
+        assignPass.dispatchWorkgroups(Math.ceil(COLOR_COUNT / 256));
         assignPass.end();
 
         const updatePass = encoder.beginComputePass();
